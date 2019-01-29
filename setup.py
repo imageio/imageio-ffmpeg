@@ -1,6 +1,5 @@
 """
 Setup script for imageio-ffmpeg.
-
 """
 
 import os
@@ -31,24 +30,38 @@ if "sdist" in sys.argv:
             os.remove(os.path.join(target_dir, fname))
 
 
+long_description = """
+FFMPEG functionality for imageio.
+
+Note that the platform-specific wheels contain the binary executables
+of ffmpeg and ffprobe, which makes this package a bit over 100 MiB in size.
+I guess that's the cost for being able to read/write video files.
+
+For Linux users: the above is not the case when installing via your
+Linux package manager (if that is possible), because this package would
+simply depend on ffmpeg anf ffprobe in that case.
+""".lstrip()
+
+
 setup(
     name="imageio-ffmpeg",
     version=__version__,
     author="imageio contributors",
     author_email="almar.klein@gmail.com",
     license="(new) BSD",
-    url="http://imageio.github.io/",
+    url="https://github.com/imageio/imageio-ffmpeg",
     download_url="http://pypi.python.org/pypi/imageio-ffmpeg",
     keywords="video ffmpeg",
-    description="",
-    long_description="",
+    description="FFMPEG functionality for imageio",
+    long_description=long_description,
     platforms="any",
     provides=["imageio_ffmpeg"],
     python_requires=">=3.4",
-    install_requires=[],
+    install_requires=[],  # todo: maybe numpy
     packages=["imageio_ffmpeg"],
     package_dir={"imageio_ffmpeg": "imageio_ffmpeg"},
     package_data={"imageio_ffmpeg": ["binaries/*.*"]},
+    zip_safe=False,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",

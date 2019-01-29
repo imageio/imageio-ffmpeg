@@ -1,1 +1,1 @@
-Exes are dropped here by the setup script.
+Exes are dropped here by the release script.
