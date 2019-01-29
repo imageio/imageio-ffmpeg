@@ -6,6 +6,8 @@ of imageio's ffmpeg plugin. It takes care of producing platform-specific
 wheels that include the binary executables of ffmpeg and ffprobe. These
 can then be installed (and updated, and uninstalled) easily with pip.
 
+(For those interested, the actual binaries are on https://github.com/imageio/imageio-binaries.)
+
 Maybe the purpose ends there. Though I think I'll also move some of the actual
 wrapping here, and thus make imageio a bit lighter. This repo can then
 also be used by itself.
