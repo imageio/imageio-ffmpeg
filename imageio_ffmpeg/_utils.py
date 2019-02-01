@@ -1,10 +1,13 @@
 import os
 import sys
 import subprocess
+import logging
 
 from ._definitions import get_platform, SUFFIX_PER_PLATFORM
 
 LIB_DIR = os.path.dirname(os.path.abspath(__file__))
+
+logger = logging.getLogger("imageio_ffmpeg")
 
 
 def get_ffmpeg_exe():
