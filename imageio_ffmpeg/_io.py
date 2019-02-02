@@ -22,7 +22,8 @@ def _get_exe():
 
 
 def count_frames_and_secs(path):
-    """ Get the number of frames and number of seconds for the given video
+    """
+    Get the number of frames and number of seconds for the given video
     file. Note that this operation can be quite slow for large files.
     
     Disclaimer: I've seen this produce different results from actually reading
@@ -59,7 +60,8 @@ def count_frames_and_secs(path):
 
 
 def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
-    """ Create a generator to iterate over the frames in a video file.
+    """
+    Create a generator to iterate over the frames in a video file.
     It first yields a small metadata dictionary that contains at least
     the frame size. After that, it yields frames until the end of the
     video is reached.
@@ -226,7 +228,8 @@ def write_frames(
     input_params=None,
     output_params=None,
 ):
-    """ Create a generator to write frames into a video file.
+    """
+    Create a generator to write frames into a video file.
     
     Example:
     

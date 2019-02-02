@@ -11,7 +11,8 @@ logger = logging.getLogger("imageio_ffmpeg")
 
 
 def get_ffmpeg_exe():
-    """ Get the ffmpeg executable file. This can be the binary defined by 
+    """
+    Get the ffmpeg executable file. This can be the binary defined by 
     the IMAGEIO_FFMPEG_EXE environment variable, the binary distributed
     with imageio-ffmpeg, an ffmpeg binary installed with conda, or the
     system ffmpeg (in that order). A RuntimeError is raised if no valid
@@ -64,7 +65,8 @@ def get_ffmpeg_exe():
 
 
 def get_ffmpeg_version():
-    """ Get the version of the used ffmpeg executable (as a string).
+    """
+    Get the version of the used ffmpeg executable (as a string).
     """
     exe = get_ffmpeg_exe()
     line = subprocess.check_output([exe, "-version"]).split(b"\n", 1)[0]
