@@ -13,12 +13,13 @@ from invoke import task
 # ---------- Per project config ----------
 
 NAME = "imageio-ffmpeg"
-PY_PATHS = [NAME.replace("-", "_"), "tasks.py", "setup.py"]  # for linting/formatting
+LIBNAME = NAME.replace("-", "_")
+PY_PATHS = [LIBNAME, "tests", "tasks.py", "setup.py"]  # for linting/formatting
 
 # ----------------------------------------
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-if not os.path.isdir(os.path.join(ROOT_DIR, NAME.replace("-", "_"))):
+if not os.path.isdir(os.path.join(ROOT_DIR, LIBNAME)):
     raise RuntimeError("package NAME seems to be incorrect.")
 
 
@@ -27,7 +28,7 @@ def test(ctx, cover=False):
     """Perform unit tests. Use --cover to open a webbrowser to show coverage.
     """
     cmd = [sys.executable, "-m", "pytest", "tests"]
-    cmd += ["--cov=", NAME, "--cov-report=term", "--cov-report=html"]
+    cmd += ["--cov=" + LIBNAME, "--cov-report=term", "--cov-report=html"]
     ret_code = subprocess.call(cmd, cwd=ROOT_DIR)
     if ret_code:
         sys.exit(ret_code)
@@ -84,7 +85,7 @@ def clean(ctx):
                 ".pytest_cache",
                 "dist",
                 "build",
-                NAME.replace("-", "_") + ".egg-info",
+                LIBNAME + ".egg-info",
             ):
                 shutil.rmtree(os.path.join(root, dname))
                 print("Removing", dname)
