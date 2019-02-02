@@ -31,6 +31,7 @@ def count_frames_and_secs(path):
     """
     # https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg
 
+    assert isinstance(path, str), "File path must be a string"
     if not os.path.isfile(path):  # pragma: no cover
         raise FileNotFoundError("count_frames_and_secs: given file does not exist.")
 
@@ -54,7 +55,7 @@ def count_frames_and_secs(path):
                 nsecs = cvsecs(*s.split(":"))
             return nframes, nsecs
 
-    raise RuntimeError("Could not get number of frames")
+    raise RuntimeError("Could not get number of frames")  # pragma: no cover
 
 
 def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
@@ -84,6 +85,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
 
     # ----- Input args
 
+    assert isinstance(path, str), "File path must be a string"
     if not os.path.isfile(path):  # pragma: no cover
         raise FileNotFoundError("read_frames: given file does not exist.")
 
@@ -196,7 +198,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
                     p.communicate(b"q")
                 else:
                     p.send_signal(signal.SIGINT)
-            except Exception as err:
+            except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg: " + str(err))
 
             # Wait for it to stop
@@ -205,7 +207,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
                 time.sleep(0.01)
 
             # Grr, we have to kill it
-            if p.poll() is None:
+            if p.poll() is None:  # pragma: no cover
                 logger.warning("We had to kill ffmpeg to stop it.")
                 p.kill()
 
@@ -243,11 +245,11 @@ def write_frames(
         fps (float): The frames per second. Default 16.
         quality (float): A measure for quality between 0 and 10. Default 5.
             Ignored if bitrate is given.
-        bitrate (float): The bitrate. Usually the defaults are pretty good.
+        bitrate (str): The bitrate, e.g. "192k". The defaults are pretty good.
         codec (str): The codec. Default "libx264" (or "msmpeg4" for .wmv).
         macro_block_size (int): You probably want to align the size of frames
-            to this value to avoid image resizing. Default 16. Can also be set
-            to None to avoid block alignment, though this is not recommended.
+            to this value to avoid image resizing. Default 16. Can be set
+            to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level.
         input_params (list): Additional ffmpeg input parameters.
         output_params (list): Additional ffmpeg output parameters.
@@ -255,14 +257,14 @@ def write_frames(
 
     # ----- Input args
 
-    if not os.path.isfile(path):  # pragma: no cover
-        raise FileNotFoundError("write_frames: given file does not exist.")
+    assert isinstance(path, str), "File path must be a string"
 
     pix_fmt_in = pix_fmt_in or "rgb24"
     pix_fmt_out = pix_fmt_out or "yuv420p"
     fps = fps or 16
     quality = quality or 5
     # bitrate, codec, macro_block_size can all be None or ...
+    macro_block_size = macro_block_size or 16
     ffmpeg_log_level = ffmpeg_log_level or "warning"
     input_params = input_params or []
     output_params = output_params or []
@@ -274,6 +276,8 @@ def write_frames(
     assert isinstance(pix_fmt_out, str), "pix_fmt_out must be a string"
     assert isinstance(fps, floatish), "fps must be a float"
     assert isinstance(quality, floatish), "quality must be a float"
+    assert 1 <= quality <= 10, "quality must be between 1 and 10 inclusive"
+    assert isinstance(macro_block_size, int), "macro_block_size must be int"
     assert isinstance(ffmpeg_log_level, str), "ffmpeg_log_level must be str"
     assert isinstance(input_params, list), "input_params must be a list"
     assert isinstance(output_params, list), "output_params must be a list"
@@ -309,8 +313,6 @@ def write_frames(
     if bitrate is not None:
         cmd += ["-b:v", str(bitrate)]
     elif quality is not None:  # If None, then we don't add anything
-        if quality < 0 or quality > 10:
-            raise ValueError("ffpmeg quality parameter must be between 0 and 10.")
         quality = 1 - quality / 10.0
         if codec == "libx264":
             # crf ranges 0 to 51, 51 being worst.
@@ -327,7 +329,7 @@ def write_frames(
     # 16 the default for the macro_block_size is 16. Check if image is
     # divisible, if not have ffmpeg upsize to nearest size and warn
     # user they should correct input image if this is not desired.
-    if macro_block_size is not None and macro_block_size > 1:
+    if macro_block_size > 1:
         if size[0] % macro_block_size > 0 or size[1] % macro_block_size > 0:
             out_w = size[0]
             out_h = size[1]
@@ -342,10 +344,7 @@ def write_frames(
                 "to {} to ensure video compatibility with most codecs "
                 "and players. To prevent resizing, make your input "
                 "image divisible by the macro_block_size or set the "
-                "macro_block_size to None (risking incompatibility). You "
-                "may also see a FFMPEG warning concerning "
-                "speedloss due to "
-                "data not being aligned.".format(
+                "macro_block_size to 1 (risking incompatibility).".format(
                     macro_block_size, size[:2], (out_w, out_h)
                 )
             )
@@ -393,7 +392,7 @@ def write_frames(
             # Write
             try:
                 p.stdin.write(bb)
-            except IOError as err:
+            except Exception as err:
                 # Show the command and stderr from pipe
                 msg = (
                     "{0:}\n\nFFMPEG COMMAND:\n{1:}\n\nFFMPEG STDERR "
@@ -413,7 +412,7 @@ def write_frames(
             # Ask ffmpeg to quit - and finish writing the file
             try:
                 p.stdin.close()
-            except Exception as err:
+            except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg: " + str(err))
 
             # Wait for it to stop. The above will signal that we're done,
@@ -423,6 +422,6 @@ def write_frames(
                 time.sleep(0.01)
 
             # Grr, we have to kill it
-            if p.poll() is None:
+            if p.poll() is None:  # pragma: no cover
                 logger.warning("We had to kill ffmpeg to stop it.")
                 p.kill()

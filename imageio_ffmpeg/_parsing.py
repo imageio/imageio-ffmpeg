@@ -126,6 +126,9 @@ def parse_ffmpeg_header(text):
     ]
     line = videolines[0]
 
+    # Codec hint
+    meta["codec"] = line.split("Video: ", 1)[-1].lstrip().split(" ", 1)[0].strip()
+
     # get the frame rate.
     # matches can be empty, see #171, assume nframes = inf
     # the regexp omits values of "1k tbr" which seems a specific edge-case #262
