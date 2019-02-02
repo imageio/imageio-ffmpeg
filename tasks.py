@@ -20,7 +20,7 @@ PY_PATHS = [LIBNAME, "tests", "tasks.py", "setup.py"]  # for linting/formatting
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 if not os.path.isdir(os.path.join(ROOT_DIR, LIBNAME)):
-    raise RuntimeError("package NAME seems to be incorrect.")
+    sys.exit("package NAME seems to be incorrect.")
 
 
 @task
@@ -203,6 +203,8 @@ def build(ctx):
     for fname in sorted(os.listdir(dist_dir)):
         s = os.stat(os.path.join(dist_dir, fname)).st_size
         print(f"  {s/2**10:0.0f} KiB  {fname}")
+    if sys.platform.startswith("win"):
+        print("Note that the exes for Linux/OSX are not chmodded properly!")
 
 
 @task
@@ -211,7 +213,7 @@ def release(ctx):
     """
     dist_dir = os.path.join(ROOT_DIR, "dist")
     if not os.path.isdir(dist_dir):
-        raise RuntimeError("Dist dirfectory does not exist. Build first?")
+        sys.exit("Dist directory does not exist. Build first?")
 
     print("This is what you are about to upload:")
     for fname in sorted(os.listdir(dist_dir)):
@@ -224,6 +226,9 @@ def release(ctx):
             return
         elif x.upper() == "Y":
             break
+
+    if sys.platform.startswith("win"):
+        sys.exit("Cannot release from Windows: the exes wont be chmodded properly!")
 
     # subprocess.check_call([sys.executable, "-m", "twine", "upload", "dist/*"])
 
@@ -259,9 +264,7 @@ def copy_binaries(target_dir, fname):
         os.path.join(ROOT_DIR, "..", "imageio-binaries", "ffmpeg")
     )
     if not os.path.isdir(source_dir):
-        raise RuntimeError(
-            "Need to clone imageio-binaries next to this repo to do a release!"
-        )
+        sys.exit("Need to clone imageio-binaries next to this repo to do a release!")
 
     clear_binaries_dir(target_dir)
     print("Copying", fname, "...", end="")
