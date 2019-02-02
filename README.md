@@ -3,7 +3,7 @@ FFMPEG functionality for imageio
 
 The purpose of this project is to take care of some of the difficulty
 of imageio's ffmpeg plugin. It takes care of producing platform-specific
-wheels that include the binary executables of ffmpeg and ffprobe. These
+wheels that include the binary executables of ffmpeg. These
 can then be installed (and updated, and uninstalled) easily with pip.
 
 (For those interested, the actual binaries are on https://github.com/imageio/imageio-binaries.)

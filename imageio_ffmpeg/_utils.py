@@ -3,7 +3,7 @@ import sys
 import subprocess
 import logging
 
-from ._definitions import get_platform, SUFFIX_PER_PLATFORM
+from ._definitions import get_platform, FNAME_PER_PLATFORM
 
 LIB_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,9 +26,7 @@ def get_ffmpeg_exe():
     plat = get_platform()
 
     # 2. Try from here
-    exe = os.path.join(
-        LIB_DIR, "binaries", "ffmpeg-" + SUFFIX_PER_PLATFORM.get(plat, "")
-    )
+    exe = os.path.join(LIB_DIR, "binaries", FNAME_PER_PLATFORM.get(plat, ""))
     if exe and os.path.isfile(exe):
         return exe
 

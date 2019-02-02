@@ -99,15 +99,16 @@ def clean(ctx):
 
 
 @task
-def get_ffmpeg_binaries(ctx):
-    """ Download/copy ffmpeg binaries for local development.
+def get_ffmpeg_binary(ctx):
+    """ Download/copy ffmpeg binary for local development.
     """
-    # Get suffix
+    # Get ffmpeg fname
     sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
     try:
-        from _definitions import suffix
+        from _definitions import FNAME_PER_PLATFORM, get_platform
     finally:
         sys.path.pop(0)
+    fname = FNAME_PER_PLATFORM[get_platform()]
 
     # Clear
     clear_binaries_dir(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"))
@@ -117,19 +118,17 @@ def get_ffmpeg_binaries(ctx):
         os.path.join(ROOT_DIR, "..", "imageio-binaries", "ffmpeg")
     )
     if os.path.isdir(source_dir):
-        copy_binaries(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"), suffix)
+        copy_binaries(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"), fname)
         return
 
     # Download from Github
     base_url = "https://github.com/imageio/imageio-binaries/raw/master/ffmpeg/"
-    for name in ["ffmpeg", "ffprobe"]:
-        fname = name + "-" + suffix
-        filename = os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries", fname)
-        print("Downloading", fname, "...", end="")
-        with urlopen(base_url + fname, timeout=5) as f1:
-            with open(filename, "wb") as f2:
-                shutil.copyfileobj(f1, f2)
-        print("done")
+    filename = os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries", fname)
+    print("Downloading", fname, "...", end="")
+    with urlopen(base_url + fname, timeout=5) as f1:
+        with open(filename, "wb") as f2:
+            shutil.copyfileobj(f1, f2)
+    print("done")
 
 
 @task
@@ -140,7 +139,7 @@ def build(ctx):
     # Get version and more
     sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
     try:
-        from _definitions import __version__, SUFFIX_PER_PLATFORM, WHEEL_BUILDS
+        from _definitions import __version__, FNAME_PER_PLATFORM, WHEEL_BUILDS
     finally:
         sys.path.pop(0)
 
@@ -177,12 +176,12 @@ def build(ctx):
 
     # Build for different platforms
     for wheeltag, platform in WHEEL_BUILDS.items():
-        suffix = SUFFIX_PER_PLATFORM[platform]
+        ffmpeg_fname = FNAME_PER_PLATFORM[platform]
 
         # Edit
         print("Edit for {} ({})".format(platform, wheeltag))
         copy_binaries(
-            os.path.join(dist_dir, packdir, "imageio_ffmpeg", "binaries"), suffix
+            os.path.join(dist_dir, packdir, "imageio_ffmpeg", "binaries"), ffmpeg_fname
         )
         make_platform_specific(wheelfile, wheeltag)
 
@@ -252,7 +251,7 @@ def clear_binaries_dir(target_dir):
             print("done")
 
 
-def copy_binaries(target_dir, suffix):
+def copy_binaries(target_dir, fname):
     # Get source dir - the imageio-binaries repo must be present
     source_dir = os.path.abspath(
         os.path.join(ROOT_DIR, "..", "imageio-binaries", "ffmpeg")
@@ -263,11 +262,9 @@ def copy_binaries(target_dir, suffix):
         )
 
     clear_binaries_dir(target_dir)
-    for name in ["ffmpeg", "ffprobe"]:
-        fname = name + "-" + suffix
-        print("Copying", fname, "...", end="")
-        shutil.copy2(os.path.join(source_dir, fname), os.path.join(target_dir, fname))
-        print("done")
+    print("Copying", fname, "...", end="")
+    shutil.copy2(os.path.join(source_dir, fname), os.path.join(target_dir, fname))
+    print("done")
 
 
 def make_platform_specific(filename, tag):

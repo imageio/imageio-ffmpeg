@@ -33,13 +33,13 @@ if "sdist" in sys.argv:
 long_description = """
 FFMPEG functionality for imageio.
 
-Note that the platform-specific wheels contain the binary executables
-of ffmpeg and ffprobe, which makes this package a bit over 100 MiB in size.
+Note that the platform-specific wheels contain the binary executable
+of ffmpeg, which makes this package around 60 MiB in size.
 I guess that's the cost for being able to read/write video files.
 
 For Linux users: the above is not the case when installing via your
 Linux package manager (if that is possible), because this package would
-simply depend on ffmpeg anf ffprobe in that case.
+simply depend on ffmpeg in that case.
 """.lstrip()
 
 
