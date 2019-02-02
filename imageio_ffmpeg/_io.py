@@ -21,14 +21,20 @@ def _get_exe():
 
 
 def count_frames_and_secs(path):
-    """ Get the exact number of frames and number of seconds for the given video file.
-    Note that this operation can be quite slow for large files.
+    """ Get the number of frames and number of seconds for the given video
+    file. Note that this operation can be quite slow for large files.
+    
+    Disclaimer: I've seen this produce different results from actually reading
+    the frames with older versions of ffmpeg (2.x). Therefore I cannot say
+    with 100% certainty that the returned values are always exact.
     """
     # https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
-    # cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-f", "null", "-"]
     out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
+
+    # Note that other than with the subprocess calls below, ffmpeg wont hang here.
+    # Worst case Python will stop/crash and ffmpeg will continue running until done.
 
     nframes = nsecs = None
     for line in reversed(out.splitlines()):
@@ -43,18 +49,20 @@ def count_frames_and_secs(path):
                 s = line[i:].split("=", 1)[-1].lstrip().split(" ", 1)[0].strip()
                 nsecs = cvsecs(*s.split(":"))
             return nframes, nsecs
+
     raise RuntimeError("Could not get number of frames")
 
 
 def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
     """ Create a generator to iterate over the frames in a video file.
-    It first yields a small metadata dictionary. After that it yields
-    frames until the end of the video is reached.
+    It first yields a small metadata dictionary that contains at least
+    the frame size. After that, it yields frames until the end of the
+    video is reached.
     
     This function makes no assumptions about the number of frames in
-    the data. In part because this may depend on provided output args.
-    If you want to know the number of frames in a video file, use
-    count_frames_and_secs().
+    the data. For one because this is hard to predict exactly, but also
+    because it may depend on the provided output_params. If you want
+    to know the number of frames in a video file, use count_frames_and_secs().
     
     Example:
     
@@ -64,8 +72,8 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
     Parameters:
         path (str): the file to write to.
         pix_fmt (str): the pixel format the frames to be read.
-        bpp (int): The number of bytes per pixel in the output. This depends on
-            the given pix_fmt. Default is 3 (RGB).
+        bpp (int): The number of bytes per pixel in the output.
+            This depends on the given pix_fmt. Default is 3 (RGB).
         input_params (list): Additional ffmpeg input parameters.
         output_params (list): Additional ffmpeg output parameters.
     """
@@ -200,7 +208,7 @@ def write_frames(
     input_params=None,
     output_params=None,
 ):
-    """ Create a generator to flush frames into a video file.
+    """ Create a generator to write frames into a video file.
     
     Example:
     
@@ -215,19 +223,18 @@ def write_frames(
         size (tuple): the width and height of the frames.
         pix_fmt_in (str): the pixel format of incoming frames.
             E.g. "gray", "gray8a", "rgb24", or "rgba". Default "rgb24".
-        pix_fmt_out (str): the pixel format to store frames in. Default yuv420p".
+        pix_fmt_out (str): the pixel format to store frames. Default yuv420p".
         fps (float): The frames per second. Default 16.
         quality (float): A measure for quality between 0 and 10. Default 5.
             Ignored if bitrate is given.
         bitrate (float): The bitrate. Usually the defaults are pretty good.
-        codec (str): The codec to use. Default "libx264" (or "msmpeg4" for .wmv).
+        codec (str): The codec. Default "libx264" (or "msmpeg4" for .wmv).
         macro_block_size (int): You probably want to align the size of frames
             to this value to avoid image resizing. Default 16. Can also be set
             to None to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level.
         input_params (list): Additional ffmpeg input parameters.
         output_params (list): Additional ffmpeg output parameters.
-    
     """
 
     # --- Prepare

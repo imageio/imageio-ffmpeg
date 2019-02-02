@@ -11,9 +11,12 @@ logger = logging.getLogger("imageio_ffmpeg")
 
 
 def get_ffmpeg_exe():
-    """ Get the ffmpeg executable file.
+    """ Get the ffmpeg executable file. This can be the binary defined by 
+    the IMAGEIO_FFMPEG_EXE environment variable, the binary distributed
+    with imageio-ffmpeg, an ffmpeg binary installed with conda, or the
+    system ffmpeg (in that order). A RuntimeError is raised if no valid
+    ffmpeg could be found.
     """
-    # Try ffmpeg exe in order of priority.
 
     # 1. Try environment variable.
     exe = os.getenv("IMAGEIO_FFMPEG_EXE", None)
