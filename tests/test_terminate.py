@@ -6,9 +6,10 @@ quits nicely (instead of being killed).
 
 import os
 import gc
-import psutil
 import tempfile
 from urllib.request import urlopen
+
+import psutil
 
 import imageio_ffmpeg
 
@@ -32,6 +33,12 @@ def setup_module():
     bb = urlopen(test_url, timeout=5).read()
     with open(test_file1, "wb") as f:
         f.write(bb)
+
+
+def test_ffmpeg_version():
+    version = imageio_ffmpeg.get_ffmpeg_version()
+    print("ffmpeg version", version)
+    assert version > "3.0"
 
 
 def test_reader_done():
@@ -121,6 +128,7 @@ def test_write_del():
 
 if __name__ == "__main__":
     setup_module()
+    test_ffmpeg_version()
     test_reader_done()
     test_reader_close()
     test_reader_del()

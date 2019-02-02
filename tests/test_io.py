@@ -28,6 +28,7 @@ def setup_module():
 
 def test_ffmpeg_version():
     version = imageio_ffmpeg.get_ffmpeg_version()
+    print("ffmpeg version", version)
     assert version > "3.0"
 
 

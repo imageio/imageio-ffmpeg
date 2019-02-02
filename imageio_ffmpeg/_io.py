@@ -196,9 +196,11 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
 
             # Ask ffmpeg to quit
             try:
-                if True:  # sys.platform.startswith("win"):
-                    p.communicate(b"q")  # Windows and OSX
-                else:
+                if True:
+                    p.communicate(b"q")
+                else:  # pragma: no cover
+                    # I read somewhere that modern ffmpeg on Linux prefers a
+                    # "ctrl-c", but tests so far suggests sending q is better.
                     p.send_signal(signal.SIGINT)
             except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg: " + str(err))
