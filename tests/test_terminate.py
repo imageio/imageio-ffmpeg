@@ -1,5 +1,7 @@
 """
 Tests specifically for ensuring that we dont have daemon ffmpeg processes.
+We should also run this test as a script, so we can confirm that ffmpeg
+quits nicely (instead of being killed).
 """
 
 import os

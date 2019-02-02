@@ -196,8 +196,8 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
 
             # Ask ffmpeg to quit
             try:
-                if sys.platform.startswith("win"):
-                    p.communicate(b"q")
+                if True:  # sys.platform.startswith("win"):
+                    p.communicate(b"q")  # Windows and OSX
                 else:
                     p.send_signal(signal.SIGINT)
             except Exception as err:  # pragma: no cover
