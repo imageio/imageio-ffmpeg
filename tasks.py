@@ -128,6 +128,9 @@ def get_ffmpeg_binary(ctx):
     with urlopen(base_url + fname, timeout=5) as f1:
         with open(filename, "wb") as f2:
             shutil.copyfileobj(f1, f2)
+    # Mark executable
+    if not sys.platform.startswith("win"):
+        os.chmod(filename, os.stat(filename).st_mode | 64)
     print("done")
 
 
