@@ -62,39 +62,6 @@ def get_ffmpeg_exe():
     )
 
 
-def get_ffprobe_exe():
-
-    # Try ffprobe exe in order of priority.
-
-    # 1. Try environment variable.
-    exe = os.getenv("IMAGEIO_FFPROBE_EXE", None)
-    if exe:
-        return exe
-
-    exe = get_ffmpeg_exe()
-    parts = exe.rsplit("ffmpeg", 1)
-    if len(parts) != 2:
-        raise RuntimeError("Could not locate ffprobe exe.")
-
-    exe = parts[0] + "ffprobe" + parts[1]
-    try:
-        with open(os.devnull, "w") as null:
-            subprocess.check_call(
-                [exe, "-version"], stdout=null, stderr=subprocess.STDOUT
-            )
-            return exe
-    except (OSError, ValueError, subprocess.CalledProcessError):
-        pass
-
-    # Nothing was found
-    raise RuntimeError("ffprobe exe not found next to ffmpeg.")
-
-
 def get_ffmpeg_info():
     exe = get_ffmpeg_exe()
-    return subprocess.check_output([exe, "-version"]).decode().strip()
-
-
-def get_ffprobe_info():
-    exe = get_ffprobe_exe()
     return subprocess.check_output([exe, "-version"]).decode().strip()
