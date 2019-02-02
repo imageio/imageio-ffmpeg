@@ -31,7 +31,7 @@ if "sdist" in sys.argv:
 
 
 long_description = """
-FFMPEG functionality for imageio.
+FFMPEG wrapper for Python.
 
 Note that the platform-specific wheels contain the binary executable
 of ffmpeg, which makes this package around 60 MiB in size.
@@ -52,7 +52,7 @@ setup(
     url="https://github.com/imageio/imageio-ffmpeg",
     download_url="http://pypi.python.org/pypi/imageio-ffmpeg",
     keywords="video ffmpeg",
-    description="FFMPEG functionality for imageio",
+    description="FFMPEG wrapper for Python",
     long_description=long_description,
     platforms="any",
     provides=["imageio_ffmpeg"],

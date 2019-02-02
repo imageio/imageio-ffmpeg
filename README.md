@@ -4,25 +4,27 @@ FFMPEG wrapper for Python
 
 ## Purpose
 
-The purpose of this project is to take care of some of the difficulty
-of imageio's ffmpeg plugin. It takes care of producing platform-specific
-wheels that include the binary executables of ffmpeg. These
-can then be installed (and updated, and uninstalled) easily with pip.
+The purpose of this project is to provide a simple reliable ffmpeg
+wrapper for working with video files. It takes care of producing
+platform-specific wheels that include the binary executables of ffmpeg.
+These can then be installed (and updated or uninstalled) easily with pip.
 
-(For those interested, the actual binaries are on https://github.com/imageio/imageio-binaries.)
+It also provides simple generator functions for reading and writing data
+from/to ffmpeg, which also reliably terminate the ffmpeg process when done.
 
-This library does not rely on imageio, and can be used by itself just fine.
+This library is used as the basis for the
+[imageio](https://github.com/imageio/imageio) ffmpeg plugin, but it can
+be used by itself just fine.
 
 
 ## How it works
 
-This library calls ffmpeg in a subprocess, and video frames are send over
-the pipes. This is certainly not the fastest way to use ffmpeg, but it
-makes it possible to wrap ffmpeg with pure Python, which makes distribution
-and installation *much* easier. And probably the code itself too.
-
-In contrast, [PyAV](https://github.com/mikeboers/PyAV) wraps ffmpeg at the C
-level.
+This library calls ffmpeg in a subprocess, and video frames are
+communicated over pipes. This is certainly not the fastest way to
+use ffmpeg, but it makes it possible to wrap ffmpeg with pure Python,
+making distribution and installation *much* easier. And probably
+the code itself too. In contrast, [PyAV](https://github.com/mikeboers/PyAV)
+wraps ffmpeg at the C level.
 
 
 ## Requirements
@@ -44,7 +46,7 @@ def get_ffmpeg_exe():
     """
 ```
 
-----
+
 
 ```py
 def get_ffmpeg_version():
@@ -53,7 +55,7 @@ def get_ffmpeg_version():
     """
 ```
 
-----
+
 
 ```py
 def count_frames_and_secs(path):
@@ -67,7 +69,7 @@ def count_frames_and_secs(path):
     """
 ```
 
-----
+
 
 ```py
 def read_frames(path, pix_fmt="rgb24", bpp=3,
@@ -98,7 +100,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3,
     """
 ```
 
-----
+
 
 ```py
 def write_frames(path, size, pix_fmt_in="rgb24", pix_fmt_out="yuv420p", fps=16,

@@ -1,4 +1,4 @@
-""" imageio_ffmpeg, FFMPEG functionality for imageio.
+""" imageio_ffmpeg, FFMPEG wrapper for Python.
 """
 
 # flake8: noqa
