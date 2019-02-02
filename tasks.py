@@ -270,7 +270,8 @@ def copy_binaries(target_dir, fname):
     print("Copying", fname, "...", end="")
     filename = os.path.join(target_dir, fname)
     shutil.copy2(os.path.join(source_dir, fname), filename)
-    os.chmod(filename, os.stat(filename).st_mode | 64)  # Mark as exe
+    # Mark as exe. This does not actually do anything on Windows.
+    os.chmod(filename, os.stat(filename).st_mode | 64)
     print("done")
 
 
