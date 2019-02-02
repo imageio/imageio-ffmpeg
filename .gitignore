@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+imageio_ffmpeg/binaries/*ffmpeg*
+imageio_ffmpeg/binaries/*ffprobe*
+
 # C extensions
 *.so
 

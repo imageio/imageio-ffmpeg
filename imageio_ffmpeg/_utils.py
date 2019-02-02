@@ -62,6 +62,11 @@ def get_ffmpeg_exe():
     )
 
 
-def get_ffmpeg_info():
+def get_ffmpeg_version():
+    """ Get the version of the used ffmpeg executable (as a string).
+    """
     exe = get_ffmpeg_exe()
-    return subprocess.check_output([exe, "-version"]).decode().strip()
+    line = subprocess.check_output([exe, "-version"]).split(b"\n", 1)[0]
+    line = line.decode(errors='ignore').strip()
+    version = line.split("version", 1)[-1].lstrip().split(" ", 1)[0].strip()
+    return version

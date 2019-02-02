@@ -23,11 +23,12 @@ def _get_exe():
 
 def count_frames_and_secs(path):
     """ Get the exact number of frames and number of seconds for the given video file.
-    Note that this operation can be relatively slow for large files.
+    Note that this operation can be quite slow for large files.
     """
     # https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
+    # cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-f", "null", "-"]
     out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
 
     nframes = nsecs = None
@@ -75,7 +76,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
     input_params = input_params or []
     output_params = output_params or []
 
-    pre_output_params = ["-f", "image2pipe", "-pix_fmt", pix_fmt, "-vcodec", "rawvideo"]
+    pre_output_params = ["-pix_fmt", pix_fmt, "-vcodec", "rawvideo", "-f", "image2pipe"]
 
     cmd = [_get_exe()]
     cmd += input_params + ["-i", path]
@@ -153,15 +154,17 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
                                 "End of file reached before full frame could be read."
                             )
                     bb += extra_bytes
+                yield bb
             except Exception as err:
                 err1 = str(err)
                 err2 = log_catcher.get_text(0.4)
                 fmt = "Could not read frame %i:\n%s\n=== stderr ===\n%s"
                 raise RuntimeError(fmt % (framenr, err1, err2))
-            yield bb
 
     finally:
-
+        # Generators are automatically closed when they get deleted,
+        # so this code is almost guaranteed to run.
+        
         if p.poll() is None:
 
             # Ask ffmpeg to quit
@@ -203,16 +206,16 @@ def write_frames(
     Example:
     
         w = write_frames(path, size)
-        w.send(None)  # seed the iterator
+        w.send(None)  # seed the generator
         for frame in frames:
             w.send(frame)
-        w.close()
+        w.close()  # don't forget this
     
     Parameters:
         path (str): the file to write to.
         size (tuple): the width and height of the frames.
         pix_fmt_in (str): the pixel format of incoming frames.
-            E.g. "gray", "gray8a", "rgb24", or "rgba".
+            E.g. "gray", "gray8a", "rgb24", or "rgba". Default "rgb24".
         pix_fmt_out (str): the pixel format to store frames in. Default yuv420p".
         fps (float): The frames per second. Default 16.
         quality (float): A measure for quality between 0 and 10. Default 5.
@@ -330,7 +333,9 @@ def write_frames(
 
     try:
 
-        # Just keep going until the generator.close() is called (raises GeneratorExit)
+        # Just keep going until the generator.close() is called (raises GeneratorExit).
+        # This could also happen when the generator is deleted somehow.
+        nframes = 0
         while True:
 
             # Get frame
@@ -351,7 +356,12 @@ def write_frames(
                     "OUTPUT:\n".format(err, cmd_str)
                 )
                 raise IOError(msg)
-
+            
+            nframes += 1
+        
+    except GeneratorExit:
+        if nframes == 0:
+            logger.warning("No frames have been written; the written video is invalid.")
     finally:
 
         if p.poll() is None:
@@ -361,3 +371,14 @@ def write_frames(
                 p.stdin.close()
             except Exception as err:
                 logger.warning("Error while attempting stop ffmpeg: " + str(err))
+            
+            # Wait for it to stop. The above will signal that we're done,
+            # but ffmpeg wrapping up takes a bit of time
+            etime = time.time() + 2.5
+            while time.time() < etime and p.poll() is None:
+                time.sleep(0.01)
+
+            # Grr, we have to kill it
+            if p.poll() is None:
+                logger.warning("We had to kill ffmpeg to stop it.")
+                p.kill()
