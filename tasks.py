@@ -129,8 +129,7 @@ def get_ffmpeg_binary(ctx):
         with open(filename, "wb") as f2:
             shutil.copyfileobj(f1, f2)
     # Mark executable
-    if not sys.platform.startswith("win"):
-        os.chmod(filename, os.stat(filename).st_mode | 64)
+    os.chmod(filename, os.stat(filename).st_mode | 64)
     print("done")
 
 
@@ -266,7 +265,9 @@ def copy_binaries(target_dir, fname):
 
     clear_binaries_dir(target_dir)
     print("Copying", fname, "...", end="")
-    shutil.copy2(os.path.join(source_dir, fname), os.path.join(target_dir, fname))
+    filename = os.path.join(target_dir, fname)
+    shutil.copy2(os.path.join(source_dir, fname), filename)
+    os.chmod(filename, os.stat(filename).st_mode | 64)  # Mark as exe
     print("done")
 
 
