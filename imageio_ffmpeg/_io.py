@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import signal
@@ -29,6 +30,9 @@ def count_frames_and_secs(path):
     with 100% certainty that the returned values are always exact.
     """
     # https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg
+
+    if not os.path.isfile(path):  # pragma: no cover
+        raise FileNotFoundError("count_frames_and_secs: given file does not exist.")
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
     out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
@@ -78,10 +82,22 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
         output_params (list): Additional ffmpeg output parameters.
     """
 
-    # --- Prepare
+    # ----- Input args
 
+    if not os.path.isfile(path):  # pragma: no cover
+        raise FileNotFoundError("read_frames: given file does not exist.")
+
+    pix_fmt = pix_fmt or "rgb24"
+    bpp = bpp or 3
     input_params = input_params or []
     output_params = output_params or []
+
+    assert isinstance(pix_fmt, str), "pix_fmt must be a string"
+    assert isinstance(bpp, int), "bpp must be an int"
+    assert isinstance(input_params, list), "input_params must be a list"
+    assert isinstance(output_params, list), "output_params must be a list"
+
+    # ----- Prepare
 
     pre_output_params = ["-pix_fmt", pix_fmt, "-vcodec", "rawvideo", "-f", "image2pipe"]
 
@@ -237,10 +253,32 @@ def write_frames(
         output_params (list): Additional ffmpeg output parameters.
     """
 
-    # --- Prepare
+    # ----- Input args
 
+    if not os.path.isfile(path):  # pragma: no cover
+        raise FileNotFoundError("write_frames: given file does not exist.")
+
+    pix_fmt_in = pix_fmt_in or "rgb24"
+    pix_fmt_out = pix_fmt_out or "yuv420p"
+    fps = fps or 16
+    quality = quality or 5
+    # bitrate, codec, macro_block_size can all be None or ...
+    ffmpeg_log_level = ffmpeg_log_level or "warning"
     input_params = input_params or []
     output_params = output_params or []
+
+    floatish = float, int
+    assert isinstance(size, (tuple, list)) and len(size) == 2, "size must be a 2-tuple"
+    assert isinstance(size[0], int) and isinstance(size[1], int), "size must be ints"
+    assert isinstance(pix_fmt_in, str), "pix_fmt_in must be a string"
+    assert isinstance(pix_fmt_out, str), "pix_fmt_out must be a string"
+    assert isinstance(fps, floatish), "fps must be a float"
+    assert isinstance(quality, floatish), "quality must be a float"
+    assert isinstance(ffmpeg_log_level, str), "ffmpeg_log_level must be str"
+    assert isinstance(input_params, list), "input_params must be a list"
+    assert isinstance(output_params, list), "output_params must be a list"
+
+    # ----- Prepare
 
     # Get parameters
     # Note that H264 is a widespread and very good codec, but if we
