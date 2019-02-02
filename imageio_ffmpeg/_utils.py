@@ -67,6 +67,6 @@ def get_ffmpeg_version():
     """
     exe = get_ffmpeg_exe()
     line = subprocess.check_output([exe, "-version"]).split(b"\n", 1)[0]
-    line = line.decode(errors='ignore').strip()
+    line = line.decode(errors="ignore").strip()
     version = line.split("version", 1)[-1].lstrip().split(" ", 1)[0].strip()
     return version

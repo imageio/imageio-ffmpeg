@@ -4,8 +4,7 @@ import signal
 import subprocess
 
 from ._utils import get_ffmpeg_exe, logger
-from ._catchers import LogCatcher
-from ._parsing import parse_ffmpeg_header, cvsecs
+from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
 
 
 ISWIN = sys.platform.startswith("win")
@@ -164,7 +163,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
     finally:
         # Generators are automatically closed when they get deleted,
         # so this code is almost guaranteed to run.
-        
+
         if p.poll() is None:
 
             # Ask ffmpeg to quit
@@ -356,9 +355,9 @@ def write_frames(
                     "OUTPUT:\n".format(err, cmd_str)
                 )
                 raise IOError(msg)
-            
+
             nframes += 1
-        
+
     except GeneratorExit:
         if nframes == 0:
             logger.warning("No frames have been written; the written video is invalid.")
@@ -371,7 +370,7 @@ def write_frames(
                 p.stdin.close()
             except Exception as err:
                 logger.warning("Error while attempting stop ffmpeg: " + str(err))
-            
+
             # Wait for it to stop. The above will signal that we're done,
             # but ffmpeg wrapping up takes a bit of time
             etime = time.time() + 2.5
