@@ -1,5 +1,6 @@
 # Travis CI configuration file for imageio-ffmpeg
 
+
 language: python
 
 # Only run travis build on push for master branch
