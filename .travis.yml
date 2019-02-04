@@ -20,9 +20,9 @@ matrix:
       python: "3.6"
       env: TEST_UNIT=0 TEST_STYLE=1
     # Special OS'es / interpreters
-    - os: windows
-      language: bash
-      env: TEST_UNIT=1
+    #- os: windows
+    #  language: bash
+    #  env: TEST_UNIT=1
     # The main tests run on Linux for a all relevant Python versions.
     - os: linux
       python: "3.4"
@@ -76,11 +76,12 @@ install:
     # Install dependencies depending on ENV
     - pip install invoke
     - if [ "${TEST_UNIT}" == "1" ]; then
-        pip install -q psutil pytest pytest-cov;
+        pip install -q psutil;
+        pip install -q --upgrade pytest pytest-cov;
         invoke get-ffmpeg-binary;
       fi;
     - if [ "${TEST_STYLE}" == "1" ]; then
-        pip install -q black flake8;
+        pip install -q --upgrade black flake8;
       fi;
 
 before_script:
