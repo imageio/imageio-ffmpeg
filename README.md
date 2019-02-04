@@ -1,6 +1,8 @@
 # imageio-ffmpeg
-FFMPEG wrapper for Python
 
+[![Build Status](https://travis-ci.org/imageio/imageio-ffmpeg.svg?branch=master)](https://travis-ci.org/imageio/imageio-ffmpeg)
+
+FFMPEG wrapper for Python
 
 ## Purpose
 
