@@ -54,7 +54,6 @@ def get_ffmpeg_exe():
 
 def _is_valid_exe(exe):
     cmd = [exe, "-version"]
-    return False
     try:
         with open(os.devnull, "w") as null:
             subprocess.check_call(cmd, stdout=null, stderr=subprocess.STDOUT)
