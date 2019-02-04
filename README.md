@@ -6,17 +6,54 @@ FFMPEG wrapper for Python
 
 ## Purpose
 
-The purpose of this project is to provide a simple reliable ffmpeg
+The purpose of this project is to provide a simple and reliable ffmpeg
 wrapper for working with video files. It takes care of producing
 platform-specific wheels that include the binary executables of ffmpeg.
 These can then be installed (and updated or uninstalled) easily with pip.
 
 It also provides simple generator functions for reading and writing data
-from/to ffmpeg, which also reliably terminate the ffmpeg process when done.
+from/to ffmpeg, which reliably terminate the ffmpeg process when done.
 
 This library is used as the basis for the
 [imageio](https://github.com/imageio/imageio) ffmpeg plugin, but it can
 be used by itself just fine.
+
+
+## Usage
+
+The `imageio_ffmpeg` library provides low level functionality to read
+and write video data, using Python generators:
+
+
+```py
+
+# Read a video file
+reader = read_frames(path)
+meta = reader.__next__()  # meta data, like frame size
+for frame in reader:
+    ... # each frame is a bytes object
+
+# Write a video file
+writer = write_frames(path, size)
+writer.send(None)  # seed the generator
+for frame in frames:
+    writer.send(frame)
+writer.close()  # don't forget this
+```
+
+
+## Requirements and installation
+
+This library works with any version of Python v3.4 and up (also Pypy).
+There are no further dependencies. It should also work on any platform.
+For common platforms (Windows, Linux, OSX), the wheels on Pypi include
+the ffmpeg executable.
+
+Install with
+
+```
+$ pip install imageio-binaries
+```
 
 
 ## How it works
@@ -27,12 +64,6 @@ use ffmpeg, but it makes it possible to wrap ffmpeg with pure Python,
 making distribution and installation *much* easier. And probably
 the code itself too. In contrast, [PyAV](https://github.com/mikeboers/PyAV)
 wraps ffmpeg at the C level.
-
-
-## Requirements
-
-This library works with any version of Python v3.4 and up (also Pypy). There
-are no further dependencies.
 
 
 ## API
@@ -74,22 +105,35 @@ def count_frames_and_secs(path):
 
 
 ```py
-def read_frames(path, pix_fmt="rgb24", bpp=3,
-                input_params=None, output_params=None):
+def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
     """
     Create a generator to iterate over the frames in a video file.
-    It first yields a small metadata dictionary that contains at least
-    the frame size. After that, it yields frames until the end of the
-    video is reached.
+    
+    It first yields a small metadata dictionary that contains:
+    
+    * ffmpeg_version: the ffmpeg version is use (as a string).
+    * codec: a hint about the codec used to encode the video, e.g. "h264"
+    * source_size: the width and height of the encoded video frames
+    * size: the width and height of the frames that will be produced
+    * fps: the frames per second. Can be zero if it could not be detected.
+    * duration: duration in seconds. Can be zero if it could not be detected.
+    
+    After that, it yields frames until the end of the video is reached. Each
+    frame is a bytes object.
     
     This function makes no assumptions about the number of frames in
     the data. For one because this is hard to predict exactly, but also
     because it may depend on the provided output_params. If you want
     to know the number of frames in a video file, use count_frames_and_secs().
+    It is also possible to estimate the number of frames from the fps and
+    duration, but note that even if both numbers are present, the resulting
+    value is not always correct.
     
     Example:
-    
-        for frame in read_frames(path):
+        
+        gen = read_frames(path)
+        meta = gen.__next__()
+        for frame in gen:
             print(len(frame))
     
     Parameters:
@@ -110,15 +154,15 @@ def write_frames(path, size, pix_fmt_in="rgb24", pix_fmt_out="yuv420p", fps=16,
                  ffmpeg_log_level="warning",
                  input_params=None, output_params=None):
     """
-    Create a generator to write frames into a video file.
+    Create a generator to write frames (bytes objects) into a video file.
     
     Example:
     
-        w = write_frames(path, size)
-        w.send(None)  # seed the generator
+        gen = write_frames(path, size)
+        gen.send(None)  # seed the generator
         for frame in frames:
-            w.send(frame)
-        w.close()  # don't forget this
+            gen.send(frame)
+        gen.close()  # don't forget this
     
     Parameters:
         path (str): the file to write to.

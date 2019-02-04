@@ -163,8 +163,10 @@ def parse_ffmpeg_header(text):
     # get duration (in seconds)
     line = [l for l in lines if "Duration: " in l][0]
     match = re.search(" [0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9]", line)
+    duration = 0
     if match is not None:
         hms = line[match.start() + 1 : match.end()].split(":")
-        meta["duration"] = cvsecs(*hms)
-
+        duration = cvsecs(*hms)
+    meta["duration"] = duration
+    
     return meta
