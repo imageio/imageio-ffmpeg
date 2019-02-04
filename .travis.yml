@@ -97,7 +97,7 @@ script:
         invoke checkformat;
       fi;
     - if [ "${TEST_UNIT}" == "1" ]; then
-        python -m 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_version())';
+        python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_version())';
         invoke test;
       fi;
 
