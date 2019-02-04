@@ -130,33 +130,11 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
 
         # Check whether we have the information
         if not log_catcher.header:
-            self._terminate()
-            # todo: ....
-            if self.request._video:
-                ffmpeg_err = (
-                    "FFMPEG STDERR OUTPUT:\n" + self.log_catcher.get_text(0.1) + "\n"
-                )
-                if "darwin" in sys.platform:
-                    if "Unknown input format: 'avfoundation'" in ffmpeg_err:
-                        ffmpeg_err += (
-                            "Try installing FFMPEG using "
-                            "home brew to get a version with "
-                            "support for cameras."
-                        )
-                raise IndexError(
-                    "No video4linux camera at %s.\n\n%s"
-                    % (self.request._video, ffmpeg_err)
-                )
-            else:
-                err2 = self.log_catcher.get_text(0.2)
-                fmt = "Could not load meta information\n=== stderr ===\n%s"
-                raise IOError(fmt % err2)
-
-        if "No such file or directory" in log_catcher.header:
-            if self.request._video:
-                raise IOError("Could not open stream %s." % path)
-            else:  # pragma: no cover - this is checked by Request
-                raise IOError("%s not found! Wrong path?" % path)
+            err2 = log_catcher.get_text(0.2)
+            fmt = "Could not load meta information\n=== stderr ===\n{}"
+            raise IOError(fmt.format(err2))
+        elif "No such file or directory" in log_catcher.header:
+            raise IOError("{} not found! Wrong path?".format(path))
 
         meta = parse_ffmpeg_header(log_catcher.header)
         yield meta
@@ -185,8 +163,8 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
             except Exception as err:
                 err1 = str(err)
                 err2 = log_catcher.get_text(0.4)
-                fmt = "Could not read frame %i:\n%s\n=== stderr ===\n%s"
-                raise RuntimeError(fmt % (framenr, err1, err2))
+                fmt = "Could not read frame {}:\n{}\n=== stderr ===\n{}"
+                raise RuntimeError(fmt.format(framenr, err1, err2))
 
     finally:
         # Generators are automatically closed when they get deleted,
@@ -292,7 +270,7 @@ def write_frames(
     # Get parameters
     # Note that H264 is a widespread and very good codec, but if we
     # do not specify a bitrate, we easily get crap results.
-    sizestr = "%dx%d" % (size[0], size[1])
+    sizestr = "{:d}x{:d}".format(*size)
     default_codec = "libx264"
     if path.lower().endswith(".wmv"):
         # This is a safer default codec on windows to get videos that
@@ -310,7 +288,7 @@ def write_frames(
 
     # Get command
     cmd = [_get_exe(), "-y", "-f", "rawvideo", "-vcodec", "rawvideo", "-s", sizestr]
-    cmd += ["-pix_fmt", pix_fmt_in, "-r", "%.02f" % fps] + input_params
+    cmd += ["-pix_fmt", pix_fmt_in, "-r", "{:.02f}".format(fps)] + input_params
     cmd += ["-i", "-"]
     cmd += ["-an", "-vcodec", codec, "-pix_fmt", pix_fmt_out]
 

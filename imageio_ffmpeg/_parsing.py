@@ -154,9 +154,10 @@ def parse_ffmpeg_header(text):
     # Check the two sizes
     if meta["source_size"] != meta["size"]:
         logger.warning(
-            "The frame size for reading %s is "
-            "different from the source frame size %s."
-            % (meta["size"], meta["source_size"])
+            "The frame size for reading {} is "
+            "different from the source frame size {}.".format(
+                meta["size"], meta["source_size"]
+            )
         )
 
     # get duration (in seconds)

@@ -202,7 +202,7 @@ def build(ctx):
     print("Dist folder:")
     for fname in sorted(os.listdir(dist_dir)):
         s = os.stat(os.path.join(dist_dir, fname)).st_size
-        print("  {:0.0f} KiB  {}".format(s/2**10, fname))
+        print("  {:0.0f} KiB  {}".format(s / 2 ** 10, fname))
     if sys.platform.startswith("win"):
         print("Note that the exes for Linux/OSX are not chmodded properly!")
 
@@ -218,7 +218,7 @@ def release(ctx):
     print("This is what you are about to upload:")
     for fname in sorted(os.listdir(dist_dir)):
         s = os.stat(os.path.join(dist_dir, fname)).st_size
-        print("  {:0.0f} KiB  {}".format(s/2**10, fname))
+        print("  {:0.0f} KiB  {}".format(s / 2 ** 10, fname))
 
     while True:
         x = input("Are you sure you want to upload now? [Y/N]: ")
