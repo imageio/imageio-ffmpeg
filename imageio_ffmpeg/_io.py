@@ -62,18 +62,32 @@ def count_frames_and_secs(path):
 def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
     """
     Create a generator to iterate over the frames in a video file.
-    It first yields a small metadata dictionary that contains at least
-    the frame size. After that, it yields frames until the end of the
-    video is reached.
+    
+    It first yields a small metadata dictionary that contains:
+    
+    * ffmpeg_version: the ffmpeg version is use (as a string).
+    * codec: a hint about the codec used to encode the video, e.g. "h264"
+    * source_size: the width and height of the encoded video frames
+    * size: the width and height of the frames that will be produced
+    * fps: the frames per second. Can be zero if it could not be detected.
+    * duration: duration in seconds. Can be zero if it could not be detected.
+    
+    After that, it yields frames until the end of the video is reached. Each
+    frame is a bytes object.
     
     This function makes no assumptions about the number of frames in
     the data. For one because this is hard to predict exactly, but also
     because it may depend on the provided output_params. If you want
     to know the number of frames in a video file, use count_frames_and_secs().
+    It is also possible to estimate the number of frames from the fps and
+    duration, but note that even if both numbers are present, the resulting
+    value is not always correct.
     
     Example:
-    
-        for frame in read_frames(path):
+        
+        gen = read_frames(path)
+        meta = gen.__next__()
+        for frame in gen:
             print(len(frame))
     
     Parameters:
@@ -209,15 +223,15 @@ def write_frames(
     output_params=None,
 ):
     """
-    Create a generator to write frames into a video file.
+    Create a generator to write frames (bytes objects) into a video file.
     
     Example:
     
-        w = write_frames(path, size)
-        w.send(None)  # seed the generator
+        gen = write_frames(path, size)
+        gen.send(None)  # seed the generator
         for frame in frames:
-            w.send(frame)
-        w.close()  # don't forget this
+            gen.send(frame)
+        gen.close()  # don't forget this
     
     Parameters:
         path (str): the file to write to.
