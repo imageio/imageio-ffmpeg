@@ -19,7 +19,7 @@ def get_ffmpeg_exe():
     ffmpeg could be found.
     """
 
-    # 1. Try environment variable.
+    # 1. Try environment variable. - Dont test it: the user is explicit here!
     exe = os.getenv("IMAGEIO_FFMPEG_EXE", None)
     if exe:
         return exe
@@ -28,7 +28,7 @@ def get_ffmpeg_exe():
 
     # 2. Try from here
     exe = os.path.join(LIB_DIR, "binaries", FNAME_PER_PLATFORM.get(plat, ""))
-    if exe and os.path.isfile(exe):
+    if exe and os.path.isfile(exe) and _is_valid_exe(exe):
         return exe
 
     # 3. Try binary from conda package
@@ -37,31 +37,30 @@ def get_ffmpeg_exe():
         exe = os.path.join(sys.prefix, "Library", "bin", "ffmpeg.exe")
     else:
         exe = os.path.join(sys.prefix, "bin", "ffmpeg")
-    if exe and os.path.isfile(exe):
-        try:
-            with open(os.devnull, "w") as null:
-                subprocess.check_call(
-                    [exe, "-version"], stdout=null, stderr=subprocess.STDOUT
-                )
-                return exe
-        except (OSError, ValueError, subprocess.CalledProcessError):
-            pass
+    if exe and os.path.isfile(exe) and _is_valid_exe(exe):
+        return exe
 
     # 4. Try system ffmpeg command
     exe = "ffmpeg"
-    try:
-        with open(os.devnull, "w") as null:
-            subprocess.check_call(
-                [exe, "-version"], stdout=null, stderr=subprocess.STDOUT
-            )
-            return exe
-    except (OSError, ValueError, subprocess.CalledProcessError):
-        pass
+    if _is_valid_exe(exe):
+        return exe
 
     # Nothing was found
     raise RuntimeError(
-        "ffmpeg exe not found. Install ffmpeg and/or set IMAGEIO_FFMPEG_EXE."
+        "No ffmpeg exe could be found. Install ffmpeg on your system, "
+        "or set the IMAGEIO_FFMPEG_EXE environment variable."
     )
+
+
+def _is_valid_exe(exe):
+    cmd = [exe, "-version"]
+    return False
+    try:
+        with open(os.devnull, "w") as null:
+            subprocess.check_call(cmd, stdout=null, stderr=subprocess.STDOUT)
+        return True
+    except (OSError, ValueError, subprocess.CalledProcessError):
+        return False
 
 
 def get_ffmpeg_version():

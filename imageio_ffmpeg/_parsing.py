@@ -168,5 +168,5 @@ def parse_ffmpeg_header(text):
         hms = line[match.start() + 1 : match.end()].split(":")
         duration = cvsecs(*hms)
     meta["duration"] = duration
-    
+
     return meta
