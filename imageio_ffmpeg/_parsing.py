@@ -116,6 +116,8 @@ def parse_ffmpeg_header(text):
     lines = text.splitlines()
     meta = {}
 
+    # meta["header"] = text  # Can enable this for debugging
+
     # Get version
     ver = lines[0].split("version", 1)[-1].split("Copyright")[0]
     meta["ffmpeg_version"] = ver.strip() + " " + lines[1].strip()
@@ -124,23 +126,26 @@ def parse_ffmpeg_header(text):
     videolines = [
         l for l in lines if l.lstrip().startswith("Stream ") and " Video: " in l
     ]
-    line = videolines[0]
 
-    # Codec hint
+    # Codec and pix_fmt hint
+    line = videolines[0]
     meta["codec"] = line.split("Video: ", 1)[-1].lstrip().split(" ", 1)[0].strip()
+    meta["pix_fmt"] = line.split("Video: ", 1)[-1].split(",")[1].strip()
 
     # get the frame rate.
     # matches can be empty, see #171, assume nframes = inf
     # the regexp omits values of "1k tbr" which seems a specific edge-case #262
     # it seems that tbr is generally to be preferred #262
-    matches = re.findall(r" ([0-9]+\.?[0-9]*) (tbr|fps)", line)
     fps = 0
-    matches.sort(key=lambda x: x[1] == "tbr", reverse=True)
-    if matches:
-        fps = float(matches[0][0].strip())
+    for line in (videolines[0], videolines[-1]):
+        matches = re.findall(r" ([0-9]+\.?[0-9]*) (tbr|fps)", line)
+        matches.sort(key=lambda x: x[1] == "tbr", reverse=True)
+        if matches:
+            fps = float(matches[0][0].strip())
     meta["fps"] = fps
 
     # get the size of the original stream, of the form 460x320 (w x h)
+    line = videolines[0]
     match = re.search(" [0-9]*x[0-9]*(,| )", line)
     parts = line[match.start() : match.end() - 1].split("x")
     meta["source_size"] = tuple(map(int, parts))

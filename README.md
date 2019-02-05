@@ -16,7 +16,8 @@ from/to ffmpeg, which reliably terminate the ffmpeg process when done.
 
 This library is used as the basis for the
 [imageio](https://github.com/imageio/imageio) ffmpeg plugin, but it can
-be used by itself just fine.
+be used by itself just fine. Imageio provides a friendlier (higher level) API,
+and adds support for e.g. cameras and seeking.
 
 
 ## Usage
