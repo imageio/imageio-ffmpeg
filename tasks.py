@@ -230,7 +230,7 @@ def release(ctx):
     if sys.platform.startswith("win"):
         sys.exit("Cannot release from Windows: the exes wont be chmodded properly!")
 
-    # subprocess.check_call([sys.executable, "-m", "twine", "upload", "dist/*"])
+    subprocess.check_call([sys.executable, "-m", "twine", "upload", "dist/*"])
 
 
 @task
