@@ -70,36 +70,6 @@ wraps ffmpeg at the C level.
 ## API
 
 ```py
-def get_ffmpeg_exe():
-    """
-    Get the ffmpeg executable file. This can be the binary defined by 
-    the IMAGEIO_FFMPEG_EXE environment variable, the binary distributed
-    with imageio-ffmpeg, an ffmpeg binary installed with conda, or the
-    system ffmpeg (in that order). A RuntimeError is raised if no valid
-    ffmpeg could be found.
-    """
-```
-
-```py
-def get_ffmpeg_version():
-    """
-    Get the version of the used ffmpeg executable (as a string).
-    """
-```
-
-```py
-def count_frames_and_secs(path):
-    """
-    Get the number of frames and number of seconds for the given video
-    file. Note that this operation can be quite slow for large files.
-    
-    Disclaimer: I've seen this produce different results from actually reading
-    the frames with older versions of ffmpeg (2.x). Therefore I cannot say
-    with 100% certainty that the returned values are always exact.
-    """
-```
-
-```py
 def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
     """
     Create a generator to iterate over the frames in a video file.
@@ -189,6 +159,36 @@ def write_frames(
         ffmpeg_log_level (str): The ffmpeg logging level.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
+    """
+```
+
+```py
+def count_frames_and_secs(path):
+    """
+    Get the number of frames and number of seconds for the given video
+    file. Note that this operation can be quite slow for large files.
+    
+    Disclaimer: I've seen this produce different results from actually reading
+    the frames with older versions of ffmpeg (2.x). Therefore I cannot say
+    with 100% certainty that the returned values are always exact.
+    """
+```
+
+```py
+def get_ffmpeg_exe():
+    """
+    Get the ffmpeg executable file. This can be the binary defined by 
+    the IMAGEIO_FFMPEG_EXE environment variable, the binary distributed
+    with imageio-ffmpeg, an ffmpeg binary installed with conda, or the
+    system ffmpeg (in that order). A RuntimeError is raised if no valid
+    ffmpeg could be found.
+    """
+```
+
+```py
+def get_ffmpeg_version():
+    """
+    Get the version of the used ffmpeg executable (as a string).
     """
 ```
 
