@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import signal
@@ -32,9 +31,7 @@ def count_frames_and_secs(path):
     """
     # https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg
 
-    assert isinstance(path, str), "File path must be a string"
-    if not os.path.isfile(path):  # pragma: no cover
-        raise FileNotFoundError("count_frames_and_secs: given file does not exist.")
+    assert isinstance(path, str), "Video path must be a string"
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
     out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
@@ -92,18 +89,18 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
     
     Parameters:
         path (str): the file to write to.
-        pix_fmt (str): the pixel format the frames to be read.
-        bpp (int): The number of bytes per pixel in the output.
+        pix_fmt (str): the pixel format of the frames to be read.
+            The default is "rgb24" (frames are uint8 RGB images).
+        bpp (int): The number of bytes per pixel in the output frames.
             This depends on the given pix_fmt. Default is 3 (RGB).
-        input_params (list): Additional ffmpeg input parameters.
-        output_params (list): Additional ffmpeg output parameters.
+        input_params (list): Additional ffmpeg input command line parameters.
+        output_params (list): Additional ffmpeg output command line parameters.
     """
 
     # ----- Input args
 
-    assert isinstance(path, str), "File path must be a string"
-    if not os.path.isfile(path):  # pragma: no cover
-        raise FileNotFoundError("read_frames: given file does not exist.")
+    assert isinstance(path, str), "Video path must be a string"
+    # Note: Dont check whether it exists. The source could be e.g. a camera.
 
     pix_fmt = pix_fmt or "rgb24"
     bpp = bpp or 3
@@ -225,6 +222,10 @@ def write_frames(
     """
     Create a generator to write frames (bytes objects) into a video file.
     
+    The frames are written by using the generator's `send()` method. Frames
+    can be anything that can be written to a file. Typically these are
+    bytes objects, but c-contiguous Numpy arrays also work.
+    
     Example:
     
         gen = write_frames(path, size)
@@ -248,13 +249,20 @@ def write_frames(
             to this value to avoid image resizing. Default 16. Can be set
             to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level.
-        input_params (list): Additional ffmpeg input parameters.
-        output_params (list): Additional ffmpeg output parameters.
+        input_params (list): Additional ffmpeg input command line parameters.
+        output_params (list): Additional ffmpeg output command line parameters.
     """
 
     # ----- Input args
 
-    assert isinstance(path, str), "File path must be a string"
+    assert isinstance(path, str), "Video path must be a string"
+
+    # The pix_fmt_out yuv420p is the best for the outpur to work in
+    # QuickTime and most other players. These players only support
+    # the YUV planar color space with 4:2:0 chroma subsampling for
+    # H.264 video. Otherwise, depending on the source, ffmpeg may
+    # output to a pixel format that may be incompatible with these
+    # players. See https://trac.ffmpeg.org/wiki/Encode/H.264#Encodingfordumbplayers
 
     pix_fmt_in = pix_fmt_in or "rgb24"
     pix_fmt_out = pix_fmt_out or "yuv420p"
@@ -267,8 +275,17 @@ def write_frames(
     output_params = output_params or []
 
     floatish = float, int
-    assert isinstance(size, (tuple, list)) and len(size) == 2, "size must be a 2-tuple"
-    assert isinstance(size[0], int) and isinstance(size[1], int), "size must be ints"
+    if isinstance(size, (tuple, list)):
+        assert len(size) == 2, "size must be a 2-tuple"
+        assert isinstance(size[0], int) and isinstance(
+            size[1], int
+        ), "size must be ints"
+        sizestr = "{:d}x{:d}".format(*size)
+    # elif isinstance(size, str):
+    #     assert "x" in size, "size as string must have format NxM"
+    #     sizestr = size
+    else:
+        assert False, "size must be string or tuple"
     assert isinstance(pix_fmt_in, str), "pix_fmt_in must be a string"
     assert isinstance(pix_fmt_out, str), "pix_fmt_out must be a string"
     assert isinstance(fps, floatish), "fps must be a float"
@@ -282,9 +299,6 @@ def write_frames(
     # ----- Prepare
 
     # Get parameters
-    # Note that H264 is a widespread and very good codec, but if we
-    # do not specify a bitrate, we easily get crap results.
-    sizestr = "{:d}x{:d}".format(*size)
     default_codec = "libx264"
     if path.lower().endswith(".wmv"):
         # This is a safer default codec on windows to get videos that
@@ -292,13 +306,6 @@ def write_frames(
         # available on windows.
         default_codec = "msmpeg4"
     codec = codec or default_codec
-    # You may need to use -pix_fmt yuv420p for your output to work in
-    # QuickTime and most other players. These players only supports
-    # the YUV planar color space with 4:2:0 chroma subsampling for
-    # H.264 video. Otherwise, depending on your source, ffmpeg may
-    # output to a pixel format that may be incompatible with these
-    # players. See
-    # https://trac.ffmpeg.org/wiki/Encode/H.264#Encodingfordumbplayers
 
     # Get command
     cmd = [_get_exe(), "-y", "-f", "rawvideo", "-vcodec", "rawvideo", "-s", sizestr]

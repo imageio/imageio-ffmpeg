@@ -233,6 +233,32 @@ def release(ctx):
     # subprocess.check_call([sys.executable, "-m", "twine", "upload", "dist/*"])
 
 
+@task
+def update_readme(ctx):
+    """Update readme to include the latest API docs.
+    """
+    text = open(os.path.join(ROOT_DIR, "README.md"), "rb").read().decode()
+    text = text.split("\n## API\n")[0] + "\n## API\n\n"
+
+    import inspect
+    import imageio_ffmpeg
+
+    for func in (
+        imageio_ffmpeg.read_frames,
+        imageio_ffmpeg.write_frames,
+        imageio_ffmpeg.count_frames_and_secs,
+        imageio_ffmpeg.get_ffmpeg_exe,
+        imageio_ffmpeg.get_ffmpeg_version,
+    ):
+        source = inspect.getsourcelines(func)[0]
+        stripped = [x.strip() for x in source]
+        end = stripped.index('"""', stripped.index('"""') + 1) + 1
+        text += "```py\n" + "".join(source[:end]) + "```\n\n"
+
+    with open(os.path.join(ROOT_DIR, "README.md"), "wb") as f:
+        f.write(text.encode())
+
+
 ##
 
 
