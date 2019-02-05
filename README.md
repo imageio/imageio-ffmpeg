@@ -16,7 +16,7 @@ from/to ffmpeg, which reliably terminate the ffmpeg process when done.
 
 This library is used as the basis for the
 [imageio](https://github.com/imageio/imageio) ffmpeg plugin, but it can
-be used by itself just fine. Imageio provides a friendlier (higher level) API,
+also be used by itself. Imageio provides a friendlier (higher level) API,
 and adds support for e.g. cameras and seeking.
 
 
@@ -30,12 +30,12 @@ and write video data, using Python generators:
 
 # Read a video file
 reader = read_frames(path)
-meta = reader.__next__()  # meta data, like frame size
+meta = reader.__next__()  # meta data, e.g. meta["size"] -> (width, height)
 for frame in reader:
     ... # each frame is a bytes object
 
 # Write a video file
-writer = write_frames(path, size)
+writer = write_frames(path, size)  # size is (width, height)
 writer.send(None)  # seed the generator
 for frame in frames:
     writer.send(frame)
@@ -45,10 +45,10 @@ writer.close()  # don't forget this
 
 ## Requirements and installation
 
-This library works with any version of Python v3.4 and up (also Pypy).
+This library works with any version of Python 3.4+ (including Pypy).
 There are no further dependencies. It should also work on any platform.
-For common platforms (Windows, Linux, OSX), the wheels on Pypi include
-the ffmpeg executable.
+For common platforms (Windows 7+, Linux kernel 2.6.32+, OSX 10.9+),
+the wheels on Pypi include the ffmpeg executable.
 
 Install with
 
@@ -80,16 +80,12 @@ def get_ffmpeg_exe():
     """
 ```
 
-
-
 ```py
 def get_ffmpeg_version():
     """
     Get the version of the used ffmpeg executable (as a string).
     """
 ```
-
-
 
 ```py
 def count_frames_and_secs(path):
@@ -102,8 +98,6 @@ def count_frames_and_secs(path):
     with 100% certainty that the returned values are always exact.
     """
 ```
-
-
 
 ```py
 def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
@@ -139,23 +133,36 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
     
     Parameters:
         path (str): the file to write to.
-        pix_fmt (str): the pixel format the frames to be read.
-        bpp (int): The number of bytes per pixel in the output.
+        pix_fmt (str): the pixel format of the frames to be read.
+            The default is "rgb24" (frames are uint8 RGB images).
+        bpp (int): The number of bytes per pixel in the output frames.
             This depends on the given pix_fmt. Default is 3 (RGB).
-        input_params (list): Additional ffmpeg input parameters.
-        output_params (list): Additional ffmpeg output parameters.
+        input_params (list): Additional ffmpeg input command line parameters.
+        output_params (list): Additional ffmpeg output command line parameters.
     """
 ```
 
-
-
 ```py
-def write_frames(path, size, pix_fmt_in="rgb24", pix_fmt_out="yuv420p", fps=16,
-                 quality=5, bitrate=None, codec=None, macro_block_size=16,
-                 ffmpeg_log_level="warning",
-                 input_params=None, output_params=None):
+def write_frames(
+    path,
+    size,
+    pix_fmt_in="rgb24",
+    pix_fmt_out="yuv420p",
+    fps=16,
+    quality=5,
+    bitrate=None,
+    codec=None,
+    macro_block_size=16,
+    ffmpeg_log_level="warning",
+    input_params=None,
+    output_params=None,
+):
     """
     Create a generator to write frames (bytes objects) into a video file.
+    
+    The frames are written by using the generator's `send()` method. Frames
+    can be anything that can be written to a file. Typically these are
+    bytes objects, but c-contiguous Numpy arrays also work.
     
     Example:
     
@@ -180,7 +187,8 @@ def write_frames(path, size, pix_fmt_in="rgb24", pix_fmt_out="yuv420p", fps=16,
             to this value to avoid image resizing. Default 16. Can be set
             to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level.
-        input_params (list): Additional ffmpeg input parameters.
-        output_params (list): Additional ffmpeg output parameters.
+        input_params (list): Additional ffmpeg input command line parameters.
+        output_params (list): Additional ffmpeg output command line parameters.
     """
 ```
+
