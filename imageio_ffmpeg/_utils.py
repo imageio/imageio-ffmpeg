@@ -1,11 +1,10 @@
 import os
+from pkg_resources import resource_filename
 import sys
 import subprocess
 import logging
 
 from ._definitions import get_platform, FNAME_PER_PLATFORM
-
-LIB_DIR = os.path.dirname(os.path.abspath(__file__))
 
 logger = logging.getLogger("imageio_ffmpeg")
 
@@ -27,7 +26,8 @@ def get_ffmpeg_exe():
     plat = get_platform()
 
     # 2. Try from here
-    exe = os.path.join(LIB_DIR, "binaries", FNAME_PER_PLATFORM.get(plat, ""))
+    bin_dir = resource_filename("imageio_ffmpeg", "binaries")
+    exe = os.path.join(bin_dir, FNAME_PER_PLATFORM.get(plat, ""))
     if exe and os.path.isfile(exe) and _is_valid_exe(exe):
         return exe
 
