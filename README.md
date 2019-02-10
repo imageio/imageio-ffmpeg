@@ -7,17 +7,48 @@ FFMPEG wrapper for Python
 ## Purpose
 
 The purpose of this project is to provide a simple and reliable ffmpeg
-wrapper for working with video files. It takes care of producing
-platform-specific wheels that include the binary executables of ffmpeg.
-These can then be installed (and updated or uninstalled) easily with pip.
-
-It also provides simple generator functions for reading and writing data
-from/to ffmpeg, which reliably terminate the ffmpeg process when done.
+wrapper for working with video files. It implements two simple generator
+functions for reading and writing data from/to ffmpeg, which reliably
+terminate the ffmpeg process when done. It also takes care of publishing
+platform-specific wheels that include the binary ffmpeg executables.
 
 This library is used as the basis for the
-[imageio](https://github.com/imageio/imageio) ffmpeg plugin, but it can
-also be used by itself. Imageio provides a friendlier (higher level) API,
+[imageio](https://github.com/imageio/imageio)
+[ffmpeg plugin](https://imageio.readthedocs.io/en/stable/format_ffmpeg.html),
+but it can also be used by itself. Imageio provides a higher level API,
 and adds support for e.g. cameras and seeking.
+
+
+## Installation
+
+This library works with any version of Python 3.4+ (including Pypy).
+There are no further dependencies. 
+
+### Pip
+
+```
+$ pip install --upgrade imageio-ffmpeg
+```
+
+The wheels on Pypi include the ffmpeg executable for all common platforms
+(Windows 7+, Linux kernel 2.6.32+, OSX 10.9+).
+
+
+### If you're using a Conda environment
+
+```
+$ conda install imageio-ffmpeg -c conda-forge
+```
+
+The conda package does not include the ffmpeg executable, but depends on
+the `ffmpeg` package from `conda-forge`.
+
+
+### Bring your own ffmpeg
+
+If you don't want to use the included ffmpeg, you can use pip with
+`--no-binary` or conda with `--no-deps`. Then use the
+`IMAGEIO_FFMPEG_EXE` environment variable if needed.
 
 
 ## Usage
@@ -40,20 +71,6 @@ writer.send(None)  # seed the generator
 for frame in frames:
     writer.send(frame)
 writer.close()  # don't forget this
-```
-
-
-## Requirements and installation
-
-This library works with any version of Python 3.4+ (including Pypy).
-There are no further dependencies. It should also work on any platform.
-For common platforms (Windows 7+, Linux kernel 2.6.32+, OSX 10.9+),
-the wheels on Pypi include the ffmpeg executable.
-
-Install with
-
-```
-$ pip install imageio-binaries
 ```
 
 
