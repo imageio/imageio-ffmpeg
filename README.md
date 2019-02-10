@@ -22,31 +22,23 @@ and adds support for e.g. cameras and seeking.
 ## Installation
 
 This library works with any version of Python 3.4+ (including Pypy).
-There are no further dependencies. 
-
-### Pip
+There are no further dependencies. The wheels on Pypi include the ffmpeg
+executable for all common platforms (Windows 7+, Linux kernel 2.6.32+,
+OSX 10.9+). Install using:
 
 ```
 $ pip install --upgrade imageio-ffmpeg
 ```
 
-The wheels on Pypi include the ffmpeg executable for all common platforms
-(Windows 7+, Linux kernel 2.6.32+, OSX 10.9+).
-
-
-### If you're using a Conda environment
+If you're using a Conda environment: the conda package does not include
+the ffmpeg executable, but instead depends on the `ffmpeg` package from
+`conda-forge`. Install using:
 
 ```
 $ conda install imageio-ffmpeg -c conda-forge
 ```
 
-The conda package does not include the ffmpeg executable, but depends on
-the `ffmpeg` package from `conda-forge`.
-
-
-### Bring your own ffmpeg
-
-If you don't want to use the included ffmpeg, you can use pip with
+If you don't want to install the included ffmpeg, you can use pip with
 `--no-binary` or conda with `--no-deps`. Then use the
 `IMAGEIO_FFMPEG_EXE` environment variable if needed.
 
