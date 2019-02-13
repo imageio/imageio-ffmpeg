@@ -30,6 +30,8 @@ OSX 10.9+). Install using:
 $ pip install --upgrade imageio-ffmpeg
 ```
 
+(On Linux you may want to first `pip install -U pip`, since pip 19 is needed to detect the `manylinux2010` wheels.)
+
 If you're using a Conda environment: the conda package does not include
 the ffmpeg executable, but instead depends on the `ffmpeg` package from
 `conda-forge`. Install using:
