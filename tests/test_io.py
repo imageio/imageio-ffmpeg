@@ -264,7 +264,7 @@ def test_write_big_frames():
     for pixfmt, bpp in [("gray", 1), ("rgb24", 3), ("rgba", 4)]:
         # Prepare for writing
         gen = imageio_ffmpeg.write_frames(
-            test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=10.0)
+            test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=20.0)
         gen.send(None)  # seed
         for i in range(9):
             data = bytes((255 * np.random.rand(2048 * 2048 * bpp)).astype(np.uint8))
