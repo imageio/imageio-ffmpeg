@@ -216,6 +216,7 @@ def write_frames(
     codec=None,
     macro_block_size=16,
     ffmpeg_log_level="warning",
+    ffmpeg_timeout=5.0,
     input_params=None,
     output_params=None,
 ):
@@ -249,6 +250,8 @@ def write_frames(
             to this value to avoid image resizing. Default 16. Can be set
             to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level.
+        ffmpeg_timeout (float): Timeout in seconds to wait for ffmpeg process
+            to respond. Value of 0 will wait forever.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
     """
@@ -421,8 +424,8 @@ def write_frames(
 
             # Wait for it to stop. The above will signal that we're done,
             # but ffmpeg wrapping up takes a bit of time
-            etime = time.time() + 2.5
-            while time.time() < etime and p.poll() is None:
+            etime = time.time() + ffmpeg_timeout
+            while (not ffmpeg_timeout or time.time() < etime) and p.poll() is None:
                 time.sleep(0.01)
 
             # Grr, we have to kill it

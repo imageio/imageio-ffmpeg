@@ -253,6 +253,33 @@ def test_write_macro_block_size():
     assert frame_sizes[1] == (40, 50)
 
 
+def test_write_big_frames():
+    """Test that we give ffmpeg enough time to finish."""
+    try:
+        import numpy as np
+    except ImportError:
+        return skip("Missing 'numpy' test dependency")
+
+    sizes = []
+    for pixfmt, bpp in [("gray", 1), ("rgb24", 3), ("rgba", 4)]:
+        # Prepare for writing
+        gen = imageio_ffmpeg.write_frames(
+            test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=20.0)
+        gen.send(None)  # seed
+        for i in range(9):
+            data = (255 * np.random.rand(2048 * 2048 * bpp)).astype(int)
+            print(data.shape)
+            data = bytes(data)
+            # data = bytes((255 * np.random.rand(2048 * 2048 * bpp)).astype(int))
+            gen.send(data)
+        gen.close()
+        with open(test_file2, "rb") as f:
+            sizes.append(len(f.read()))
+        # Check nframes
+        nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+        assert nframes == 9
+
+
 if __name__ == "__main__":
     setup_module()
     test_ffmpeg_version()
@@ -268,3 +295,4 @@ if __name__ == "__main__":
     test_write_quality()
     test_write_bitrate()
     test_write_macro_block_size()
+    test_write_big_frames()
