@@ -267,7 +267,8 @@ def test_write_big_frames():
             test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=20.0)
         gen.send(None)  # seed
         for i in range(9):
-            data = bytes((255 * np.random.rand(2048 * 2048 * bpp)).astype(np.uint8))
+            data = (255 * np.random.rand(2048 * 2048 * bpp)).astype(np.uint8)
+            data = bytes(data)
             gen.send(data)
         gen.close()
         with open(test_file2, "rb") as f:
