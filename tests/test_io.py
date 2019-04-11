@@ -1,6 +1,7 @@
 import os
 import types
 import tempfile
+import subprocess
 from urllib.request import urlopen
 
 from pytest import skip, raises
@@ -152,6 +153,8 @@ def test_write_pix_fmt_in():
         nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
         assert nframes == 9
 
+    assert sizes[0] <= sizes[1] <= sizes[2]
+
 
 def test_write_pix_fmt_out():
 
@@ -260,11 +263,9 @@ def test_write_big_frames():
     except ImportError:
         return skip("Missing 'numpy' test dependency")
 
-    sizes = []
-    for pixfmt, bpp in [("gray", 1), ("rgb24", 3), ("rgba", 4)]:
-        # Prepare for writing
+    def _write_frames(pixfmt, bpp, tout):
         gen = imageio_ffmpeg.write_frames(
-            test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=20.0
+            test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=tout
         )
         gen.send(None)  # seed
         for i in range(9):
@@ -272,11 +273,22 @@ def test_write_big_frames():
             data = bytes(data)
             gen.send(data)
         gen.close()
-        with open(test_file2, "rb") as f:
-            sizes.append(len(f.read()))
-        # Check nframes
-        nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
-        assert nframes == 9
+
+    # short timeout is not enough time
+    _write_frames("rgb24", 3, 2.0)
+    raises(subprocess.CalledProcessError, imageio_ffmpeg.count_frames_and_secs, test_file2)
+
+    _write_frames("gray", 1, 15.0)
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+
+    _write_frames("rgb24", 3, 15.0)
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+
+    _write_frames("rgba", 4, 15.0)
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
 
 
 if __name__ == "__main__":
