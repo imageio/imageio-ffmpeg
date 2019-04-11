@@ -276,7 +276,9 @@ def test_write_big_frames():
 
     # short timeout is not enough time
     _write_frames("rgb24", 3, 2.0)
-    raises(subprocess.CalledProcessError, imageio_ffmpeg.count_frames_and_secs, test_file2)
+    raises(
+        subprocess.CalledProcessError, imageio_ffmpeg.count_frames_and_secs, test_file2
+    )
 
     _write_frames("gray", 1, 15.0)
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
