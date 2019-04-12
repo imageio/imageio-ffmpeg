@@ -47,12 +47,14 @@ def lint(ctx):
     except ImportError:
         sys.exit("You need to ``pip install flake8`` to lint")
 
+    print("Checking linting errors with flake8:")
+
     # We use flake8 with minimal settings
     # http://pep8.readthedocs.io/en/latest/intro.html#error-codes
     cmd = [sys.executable, "-m", "flake8"] + PY_PATHS + ["--select=F,E11"]
     ret_code = subprocess.call(cmd, cwd=ROOT_DIR)
     if ret_code == 0:
-        print("No style errors found")
+        print("No linting errors found")
     else:
         sys.exit(ret_code)
 
@@ -61,6 +63,7 @@ def lint(ctx):
 def checkformat(ctx):
     """ Check whether the code adheres to the style rules. Use autoformat to fix.
     """
+    print("Checking format with black (also see invoke autoformat):")
     black_wrapper(False)
 
 
@@ -68,6 +71,7 @@ def checkformat(ctx):
 def autoformat(ctx):
     """ Automatically format the code (using black).
     """
+    print("Auto-formatting with black:")
     black_wrapper(True)
 
 
