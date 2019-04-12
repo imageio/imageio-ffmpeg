@@ -1,6 +1,7 @@
 import os
 import types
 import tempfile
+import subprocess
 from urllib.request import urlopen
 
 from pytest import skip, raises
@@ -152,6 +153,8 @@ def test_write_pix_fmt_in():
         nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
         assert nframes == 9
 
+    assert sizes[0] <= sizes[1] <= sizes[2]
+
 
 def test_write_pix_fmt_out():
 
@@ -253,6 +256,43 @@ def test_write_macro_block_size():
     assert frame_sizes[1] == (40, 50)
 
 
+def test_write_big_frames():
+    """Test that we give ffmpeg enough time to finish."""
+    try:
+        import numpy as np
+    except ImportError:
+        return skip("Missing 'numpy' test dependency")
+
+    def _write_frames(pixfmt, bpp, tout):
+        gen = imageio_ffmpeg.write_frames(
+            test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=tout
+        )
+        gen.send(None)  # seed
+        for i in range(9):
+            data = (255 * np.random.rand(2048 * 2048 * bpp)).astype(np.uint8)
+            data = bytes(data)
+            gen.send(data)
+        gen.close()
+
+    # short timeout is not enough time
+    _write_frames("rgb24", 3, 2.0)
+    raises(
+        subprocess.CalledProcessError, imageio_ffmpeg.count_frames_and_secs, test_file2
+    )
+
+    _write_frames("gray", 1, 15.0)
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+
+    _write_frames("rgb24", 3, 15.0)
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+
+    _write_frames("rgba", 4, 15.0)
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+
+
 if __name__ == "__main__":
     setup_module()
     test_ffmpeg_version()
@@ -268,3 +308,4 @@ if __name__ == "__main__":
     test_write_quality()
     test_write_bitrate()
     test_write_macro_block_size()
+    test_write_big_frames()
