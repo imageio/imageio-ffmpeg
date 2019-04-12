@@ -34,7 +34,11 @@ def count_frames_and_secs(path):
     assert isinstance(path, str), "Video path must be a string"
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
-    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
+    except subprocess.CalledProcessError as err:
+        out = err.output.decode(errors="ignore")
+        raise RuntimeError("FFMEG call failed with {}:\n{}".format(err.returncode, out))
 
     # Note that other than with the subprocess calls below, ffmpeg wont hang here.
     # Worst case Python will stop/crash and ffmpeg will continue running until done.
@@ -249,9 +253,9 @@ def write_frames(
         macro_block_size (int): You probably want to align the size of frames
             to this value to avoid image resizing. Default 16. Can be set
             to 1 to avoid block alignment, though this is not recommended.
-        ffmpeg_log_level (str): The ffmpeg logging level.
+        ffmpeg_log_level (str): The ffmpeg logging level. Default "warning".
         ffmpeg_timeout (float): Timeout in seconds to wait for ffmpeg process
-            to respond. Value of 0 will wait forever.
+            to respond. Value of 0 will wait forever. Default 5.0.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
     """
@@ -288,14 +292,15 @@ def write_frames(
     #     assert "x" in size, "size as string must have format NxM"
     #     sizestr = size
     else:
-        assert False, "size must be string or tuple"
-    assert isinstance(pix_fmt_in, str), "pix_fmt_in must be a string"
-    assert isinstance(pix_fmt_out, str), "pix_fmt_out must be a string"
-    assert isinstance(fps, floatish), "fps must be a float"
-    assert isinstance(quality, floatish), "quality must be a float"
+        assert False, "size must be str or tuple"
+    assert isinstance(pix_fmt_in, str), "pix_fmt_in must be str"
+    assert isinstance(pix_fmt_out, str), "pix_fmt_out must be str"
+    assert isinstance(fps, floatish), "fps must be float"
+    assert isinstance(quality, floatish), "quality must be float"
     assert 1 <= quality <= 10, "quality must be between 1 and 10 inclusive"
     assert isinstance(macro_block_size, int), "macro_block_size must be int"
     assert isinstance(ffmpeg_log_level, str), "ffmpeg_log_level must be str"
+    assert isinstance(ffmpeg_timeout, floatish), "ffmpeg_timeout must be float"
     assert isinstance(input_params, list), "input_params must be a list"
     assert isinstance(output_params, list), "output_params must be a list"
 
@@ -378,6 +383,9 @@ def write_frames(
     # Note that directing stderr to a pipe on windows will cause ffmpeg
     # to hang if the buffer is not periodically cleared using
     # StreamCatcher or other means.
+    # Setting bufsize to 0 or a small value does not seem to have much effect
+    # (at least on Windows). I suspect that ffmpeg buffers # multiple frames
+    # (before encoding in a batch).
 
     # ----- Write frames
 
@@ -390,6 +398,7 @@ def write_frames(
 
             # Get frame
             bb = (yield)
+
             # framesize = size[0] * size[1] * depth * bpp
             # assert isinstance(bb, bytes), "Frame must be send as bytes"
             # assert len(bb) == framesize, "Frame must have width*height*depth*bpp bytes"
@@ -416,19 +425,23 @@ def write_frames(
 
         if p.poll() is None:
 
-            # Ask ffmpeg to quit - and finish writing the file
+            # Ask ffmpeg to quit - and wait for it to finish writing the file.
+            # Depending on the frame size and encoding this can take a few
+            # seconds (sometimes 10-20). Since a user may get bored and hit
+            # Ctrl-C, we wrap this in a try-except.
+            waited = False
             try:
-                p.stdin.close()
-            except Exception as err:  # pragma: no cover
-                logger.warning("Error while attempting stop ffmpeg: " + str(err))
-
-            # Wait for it to stop. The above will signal that we're done,
-            # but ffmpeg wrapping up takes a bit of time
-            etime = time.time() + ffmpeg_timeout
-            while (not ffmpeg_timeout or time.time() < etime) and p.poll() is None:
-                time.sleep(0.01)
-
-            # Grr, we have to kill it
-            if p.poll() is None:  # pragma: no cover
-                logger.warning("We had to kill ffmpeg to stop it.")
-                p.kill()
+                try:
+                    p.stdin.close()
+                except Exception:  # pragma: no cover
+                    pass
+                etime = time.time() + ffmpeg_timeout
+                while (not ffmpeg_timeout or time.time() < etime) and p.poll() is None:
+                    time.sleep(0.01)
+                waited = True
+            finally:
+                # Grr, we have to kill it
+                if p.poll() is None:  # pragma: no cover
+                    more = " Consider increasing ffmpeg_timeout." if waited else ""
+                    logger.warning("We had to kill ffmpeg to stop it." + more)
+                    p.kill()

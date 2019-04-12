@@ -1,7 +1,6 @@
 import os
 import types
 import tempfile
-import subprocess
 from urllib.request import urlopen
 
 from pytest import skip, raises
@@ -263,34 +262,37 @@ def test_write_big_frames():
     except ImportError:
         return skip("Missing 'numpy' test dependency")
 
+    n = 9
+
     def _write_frames(pixfmt, bpp, tout):
         gen = imageio_ffmpeg.write_frames(
             test_file2, (2048, 2048), pix_fmt_in=pixfmt, ffmpeg_timeout=tout
         )
         gen.send(None)  # seed
-        for i in range(9):
+        for i in range(n):
             data = (255 * np.random.rand(2048 * 2048 * bpp)).astype(np.uint8)
             data = bytes(data)
             gen.send(data)
         gen.close()
 
-    # short timeout is not enough time
-    _write_frames("rgb24", 3, 2.0)
-    raises(
-        subprocess.CalledProcessError, imageio_ffmpeg.count_frames_and_secs, test_file2
-    )
+    # Short timeout is not enough time
+    # Note that on Windows, if we wait a bit before calling count_frames_and_secs(),
+    # it *does* work. Probably because killing a process on Windows is not instant (?)
+    # and ffmpeg is able to still process the frames.
+    _write_frames("rgb24", 3, 1.0)
+    raises(RuntimeError, imageio_ffmpeg.count_frames_and_secs, test_file2)
 
     _write_frames("gray", 1, 15.0)
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
-    assert nframes == 9
+    assert nframes == n
 
     _write_frames("rgb24", 3, 15.0)
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
-    assert nframes == 9
+    assert nframes == n
 
     _write_frames("rgba", 4, 15.0)
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
-    assert nframes == 9
+    assert nframes == n
 
 
 if __name__ == "__main__":
