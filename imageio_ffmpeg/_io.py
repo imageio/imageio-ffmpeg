@@ -186,27 +186,10 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
         # so this code is almost guaranteed to run.
 
         if p.poll() is None:
-            # Ask ffmpeg to quit
-            try:
-                # I read somewhere that modern ffmpeg on Linux prefers a
-                # "ctrl-c", but tests so far suggests sending q is better.
-                # Except that on Linux, sending q can hang indefinitely
-                # even with a timeout, so use "ctrl-c".
-                # p.communicate(b"q")
-                p.send_signal(signal.SIGINT)
-            except Exception as err:  # pragma: no cover
-                logger.warning("Error while attempting stop ffmpeg: " + str(err))
-            else:
-                try:
-                    p.wait(timeout=1.5)
-                except subprocess.TimeoutExpired:
-                    pass
-
-            # Grr, we have to kill it
-            if p.poll() is None:  # pragma: no cover
-                logger.warning("We had to kill ffmpeg to stop it.")
-                p.kill()
-                p.wait()
+            # Sending q, ctrl-c, or SIGTERM are more polite ways to kill the subprocess
+            # but on Linux, sending q can hang even with a timeout and other signals appear to be ignored.
+            p.kill()
+            p.wait()
 
 
 def write_frames(
