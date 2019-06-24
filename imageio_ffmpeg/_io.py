@@ -208,6 +208,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
             if p.poll() is None:  # pragma: no cover
                 logger.warning("We had to kill ffmpeg to stop it.")
                 p.kill()
+                p.wait()
 
 
 def write_frames(
