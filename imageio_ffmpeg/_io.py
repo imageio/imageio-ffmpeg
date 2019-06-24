@@ -186,6 +186,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
         # so this code is almost guaranteed to run.
 
         if p.poll() is None:
+
             # Ask ffmpeg to quit
             try:
                 if True:
