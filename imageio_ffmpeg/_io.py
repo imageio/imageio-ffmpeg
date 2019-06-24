@@ -190,7 +190,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
             # Ask ffmpeg to quit
             try:
                 if True:
-                    p.stdin.write("q")
+                    p.stdin.write(b"q")
                     p.stdin.close()
                 else:  # pragma: no cover
                     # I read somewhere that modern ffmpeg on Linux prefers a
