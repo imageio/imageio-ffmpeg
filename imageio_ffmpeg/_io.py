@@ -140,9 +140,11 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
 
         # Wait for the log catcher to get the meta information
         etime = time.time() + 10.0
-        while log_catcher.isAlive() and \
-                not log_catcher.header and \
-                time.time() < etime:
+        while (
+                log_catcher.is_alive() and
+                not log_catcher.header and
+                time.time() < etime
+        ):
             time.sleep(0.01)
 
         # Check whether we have the information
