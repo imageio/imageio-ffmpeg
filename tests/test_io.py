@@ -1,6 +1,7 @@
 import os
 import types
 import tempfile
+import time
 from urllib.request import urlopen
 
 from pytest import skip, raises
@@ -91,6 +92,25 @@ def test_reading3():
         assert isinstance(frame, bytes) and len(frame) == framesize
 
     assert 50 < count < 100  # because smaller fps, same duration
+
+
+def test_reading_invalid_video():
+    """
+    Check whether invalid video is
+    handled correctly without timeouts
+    """
+    # empty file as an example of invalid video
+    _, test_invalid_file = tempfile.mkstemp(dir=test_dir)
+    gen = imageio_ffmpeg.read_frames(test_invalid_file)
+
+    start = time.time()
+    with raises(OSError):
+        gen.__next__()
+    end = time.time()
+    
+    # check if metadata extraction doesn't hang
+    # for a timeout period
+    assert end - start < 1, "Metadata extraction hangs"
 
 
 def test_reading4():
