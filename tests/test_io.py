@@ -94,6 +94,20 @@ def test_reading3():
     assert 50 < count < 100  # because smaller fps, same duration
 
 
+def test_reading4():
+    # Same as 1, but wrong, using an insane bpp, to invoke eof halfway a frame
+
+    gen = imageio_ffmpeg.read_frames(test_file1, bpp=13)
+    gen.__next__()  # == meta
+
+    with raises(RuntimeError) as info:
+        for frame in gen:
+            pass
+    msg = str(info.value).lower()
+    assert "end of file reached before full frame could be read" in msg
+    assert "ffmpeg version" in msg  # The log is included
+
+
 def test_reading_invalid_video():
     """
     Check whether invalid video is
@@ -107,24 +121,10 @@ def test_reading_invalid_video():
     with raises(OSError):
         gen.__next__()
     end = time.time()
-    
+
     # check if metadata extraction doesn't hang
     # for a timeout period
     assert end - start < 1, "Metadata extraction hangs"
-
-
-def test_reading4():
-    # Same as 1, but wrong, using an insane bpp, to invoke eof halfway a frame
-
-    gen = imageio_ffmpeg.read_frames(test_file1, bpp=13)
-    gen.__next__()  # == meta
-
-    with raises(RuntimeError) as info:
-        for frame in gen:
-            pass
-    msg = str(info.value).lower()
-    assert "end of file reached before full frame could be read" in msg
-    assert "ffmpeg version" in msg  # The log is included
 
 
 def test_write1():
@@ -323,6 +323,7 @@ if __name__ == "__main__":
     test_reading2()
     test_reading3()
     test_reading4()
+    test_reading_invalid_video()
     test_write1()
     test_write_pix_fmt_in()
     test_write_pix_fmt_out()
