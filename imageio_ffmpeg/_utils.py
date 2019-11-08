@@ -56,7 +56,15 @@ def _is_valid_exe(exe):
     cmd = [exe, "-version"]
     try:
         with open(os.devnull, "w") as null:
-            subprocess.check_call(cmd, stdout=null, stderr=subprocess.STDOUT)
+            hide_window = None
+            if os.name == 'nt':
+                # stops executable from flashing on Windows
+                hide_window = subprocess.STARTUPINFO()
+                hide_window.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            subprocess.check_call(
+                cmd, stdout=null, stderr=subprocess.STDOUT,
+                startupinfo=hide_window
+                )
         return True
     except (OSError, ValueError, subprocess.CalledProcessError):
         return False
@@ -67,7 +75,14 @@ def get_ffmpeg_version():
     Get the version of the used ffmpeg executable (as a string).
     """
     exe = get_ffmpeg_exe()
-    line = subprocess.check_output([exe, "-version"]).split(b"\n", 1)[0]
+    hide_window = None
+    if os.name == 'nt':
+        # stops executable from flashing on Windows
+        hide_window = subprocess.STARTUPINFO()
+        hide_window.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    line = subprocess.check_output(
+        [exe, "-version"], startupinfo=hide_window
+        ).split(b"\n", 1)[0]
     line = line.decode(errors="ignore").strip()
     version = line.split("version", 1)[-1].lstrip().split(" ", 1)[0].strip()
     return version
