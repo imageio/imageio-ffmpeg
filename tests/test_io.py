@@ -16,14 +16,19 @@ if os.getenv("TRAVIS_OS_NAME") == "windows":
 
 
 test_dir = tempfile.gettempdir()
-test_url = "https://raw.githubusercontent.com/imageio/imageio-binaries/master/images/cockatoo.mp4"
+test_url1 = "https://raw.githubusercontent.com/imageio/imageio-binaries/master/images/cockatoo.mp4"
+test_url2 = "https://raw.githubusercontent.com/imageio/imageio-binaries/master/images/realshort.mp4"
 test_file1 = os.path.join(test_dir, "cockatoo.mp4")
 test_file2 = os.path.join(test_dir, "test.mp4")
+test_file3 = os.path.join(test_dir, "realshort.mp4")
 
 
 def setup_module():
-    bb = urlopen(test_url, timeout=5).read()
+    bb = urlopen(test_url1, timeout=5).read()
     with open(test_file1, "wb") as f:
+        f.write(bb)
+    bb = urlopen(test_url2, timeout=5).read()
+    with open(test_file3, "wb") as f:
         f.write(bb)
 
 
@@ -106,6 +111,28 @@ def test_reading4():
     msg = str(info.value).lower()
     assert "end of file reached before full frame could be read" in msg
     assert "ffmpeg version" in msg  # The log is included
+
+
+def test_reading5():
+    # Same as 1, but using other pixel format and bits_per_pixel
+    bits_per_pixel = 12
+    bits_per_bytes = 8
+    gen = imageio_ffmpeg.read_frames(test_file3, pix_fmt="yuv420p", bits_per_pixel=bits_per_pixel)
+
+    meta = gen.__next__()
+    assert isinstance(meta, dict)
+    for key in ("size", "fps", "duration"):
+        assert key in meta
+
+    # Read frames
+    framesize = meta["size"][0] * meta["size"][1] * bits_per_pixel / bits_per_bytes
+    assert framesize == 320 * 240 * bits_per_pixel / bits_per_bytes
+    count = 0
+    for frame in gen:
+        assert isinstance(frame, bytes) and len(frame) == framesize
+        count += 1
+
+    assert count == 36
 
 
 def test_reading_invalid_video():
