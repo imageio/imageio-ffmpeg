@@ -60,7 +60,7 @@ def count_frames_and_secs(path):
     raise RuntimeError("Could not get number of frames")  # pragma: no cover
 
 
-def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
+def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_params=None, bits_per_pixel=None):
     """
     Create a generator to iterate over the frames in a video file.
     
@@ -99,6 +99,9 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
             This depends on the given pix_fmt. Default is 3 (RGB).
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
+        bits_per_pixel (int): The number of bits per pixel in the output frames.
+            This depends on the given pix_fmt. Yuv format can have 12 bits per pixel,
+            so bpp attribute useless
     """
 
     # ----- Input args
@@ -108,11 +111,12 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
 
     pix_fmt = pix_fmt or "rgb24"
     bpp = bpp or 3
+    bits_per_pixel = bits_per_pixel or bpp * 8
     input_params = input_params or []
     output_params = output_params or []
 
     assert isinstance(pix_fmt, str), "pix_fmt must be a string"
-    assert isinstance(bpp, int), "bpp must be an int"
+    assert isinstance(bits_per_pixel, int), "bpp and bits_per_pixel must be an int"
     assert isinstance(input_params, list), "input_params must be a list"
     assert isinstance(output_params, list), "output_params must be a list"
 
@@ -157,15 +161,18 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
         # ----- Read frames
 
         w, h = meta["size"]
-        framesize = w * h * bpp
+        framesize_bits = w * h * bits_per_pixel
+        framesize_bytes = framesize_bits / 8
+        assert framesize_bytes.is_integer(), "incorrect bits_per_pixel, framesize in bytes must be an int"
+        framesize_bytes = int(framesize_bytes)
         framenr = 0
 
         while True:
             framenr += 1
             try:
                 bb = bytes()
-                while len(bb) < framesize:
-                    extra_bytes = p.stdout.read(framesize - len(bb))
+                while len(bb) < framesize_bytes:
+                    extra_bytes = p.stdout.read(framesize_bytes - len(bb))
                     if not extra_bytes:
                         if len(bb) == 0:
                             return
