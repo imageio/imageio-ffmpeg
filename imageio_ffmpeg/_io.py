@@ -92,16 +92,16 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
             print(len(frame))
     
     Parameters:
-        path (str): the file to write to.
+        path (str): the file path to read from.
         pix_fmt (str): the pixel format of the frames to be read.
             The default is "rgb24" (frames are uint8 RGB images).
-        bpp (int): The number of bytes per pixel in the output frames.
-            This depends on the given pix_fmt. Default is 3 (RGB).
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
         bits_per_pixel (int): The number of bits per pixel in the output frames.
-            This depends on the given pix_fmt. Yuv format can have 12 bits per pixel,
-            so bpp attribute useless
+            This depends on the given pix_fmt. Default is 24 (RGB)
+        bpp (int): DEPRECATED, USE bits_per_pixel INSTEAD. The number of bytes per pixel in the output frames.
+            This depends on the given pix_fmt. Some pixel formats like yuv420p have 12 bits per pixel
+            and cannot be set in bytes as integer. For this reason the bpp argument is deprecated.
     """
 
     # ----- Input args
