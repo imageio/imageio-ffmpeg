@@ -10,6 +10,8 @@ def get_platform():
         return "linux{}".format(bits)
     elif sys.platform.startswith("win"):
         return "win{}".format(bits)
+    elif sys.platform.startswith("cygwin"):
+        return "win{}".format(bits)
     elif sys.platform.startswith("darwin"):
         return "osx{}".format(bits)
     else:  # pragma: no cover
