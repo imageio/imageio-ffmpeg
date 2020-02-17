@@ -4,7 +4,7 @@ import signal
 import pathlib
 import subprocess
 
-from ._utils import get_ffmpeg_exe, logger
+from ._utils import get_ffmpeg_exe, _pstartupinfo, logger
 from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
 
 
@@ -39,7 +39,9 @@ def count_frames_and_secs(path):
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
     try:
-        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
+        out = subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT, startupinfo=_pstartupinfo()
+        )
     except subprocess.CalledProcessError as err:
         out = err.output.decode(errors="ignore")
         raise RuntimeError("FFMEG call failed with {}:\n{}".format(err.returncode, out))
@@ -147,7 +149,7 @@ def read_frames(
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        shell=ISWIN,
+        startupinfo=_pstartupinfo(),
     )
 
     log_catcher = LogCatcher(p.stderr)
@@ -404,11 +406,13 @@ def write_frames(
 
     # Launch process
     p = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None, shell=ISWIN
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=None,
+        startupinfo=_pstartupinfo(),
     )
 
-    # For Windows, set `shell=True` in sp.Popen to prevent popup
-    # of a command line window in frozen applications.
     # Note that directing stderr to a pipe on windows will cause ffmpeg
     # to hang if the buffer is not periodically cleared using
     # StreamCatcher or other means.
