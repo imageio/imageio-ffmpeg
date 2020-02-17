@@ -233,7 +233,6 @@ def read_frames(
             if p.poll() is None:  # pragma: no cover
                 logger.warning("We had to kill ffmpeg to stop it.")
                 p.kill()
-                p.wait()
 
 
 def write_frames(
@@ -247,7 +246,7 @@ def write_frames(
     codec=None,
     macro_block_size=16,
     ffmpeg_log_level="warning",
-    ffmpeg_timeout=20.0,
+    ffmpeg_timeout=0,
     input_params=None,
     output_params=None,
 ):
@@ -282,8 +281,8 @@ def write_frames(
             to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level. Default "warning".
         ffmpeg_timeout (float): Timeout in seconds to wait for ffmpeg process
-            to finish. Value of 0 will wait forever. The time that ffmpeg needs
-            depends on CPU speed, compression, and frame size. Default 20.0.
+            to finish. Value of 0 will wait forever (default). The time that
+            ffmpeg needs depends on CPU speed, compression, and frame size.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
     """
@@ -417,8 +416,13 @@ def write_frames(
     # to hang if the buffer is not periodically cleared using
     # StreamCatcher or other means.
     # Setting bufsize to 0 or a small value does not seem to have much effect
-    # (at least on Windows). I suspect that ffmpeg buffers # multiple frames
-    # (before encoding in a batch).
+    # (tried on Windows and Linux). I suspect that ffmpeg buffers
+    # multiple frames (before encoding in a batch).
+
+    # Init policy by which to terminate ffmpeg
+    stop_policy = "timeout"
+    if not ffmpeg_timeout:
+        stop_policy = "wait"
 
     # ----- Write frames
 
@@ -454,27 +458,45 @@ def write_frames(
     except GeneratorExit:
         if nframes == 0:
             logger.warning("No frames have been written; the written video is invalid.")
+
+    except BaseException:
+        stop_policy = "kill"
+        raise
+
     finally:
 
         if p.poll() is None:
 
-            # Ask ffmpeg to quit - and wait for it to finish writing the file.
-            # Depending on the frame size and encoding this can take a few
-            # seconds (sometimes 10-20). Since a user may get bored and hit
-            # Ctrl-C, we wrap this in a try-except.
-            waited = False
+            # First close stdin
             try:
+                p.stdin.close()
+            except Exception:  # pragma: no cover
+                pass
+
+            if stop_policy == "timeout":
+                # Wait until timeout, produce a warning and kill if it still exists
                 try:
-                    p.stdin.close()
-                except Exception:  # pragma: no cover
-                    pass
-                etime = time.time() + ffmpeg_timeout
-                while (not ffmpeg_timeout or time.time() < etime) and p.poll() is None:
-                    time.sleep(0.01)
-                waited = True
-            finally:
-                # Grr, we have to kill it
-                if p.poll() is None:  # pragma: no cover
-                    more = " Consider increasing ffmpeg_timeout." if waited else ""
-                    logger.warning("We had to kill ffmpeg to stop it." + more)
-                    p.kill()
+                    etime = time.time() + ffmpeg_timeout
+                    while (time.time() < etime) and p.poll() is None:
+                        time.sleep(0.01)
+                finally:
+                    if p.poll() is None:  # pragma: no cover
+                        logger.warning(
+                            "We had to kill ffmpeg to stop it. "
+                            + "Consider increasing ffmpeg_timeout, "
+                            + "or setting it to zero (no timeout)."
+                        )
+                        p.kill()
+
+            elif stop_policy == "wait":
+                # Wait forever, kill if it still exists
+                try:
+                    while p.poll() is None:
+                        time.sleep(0.01)
+                finally:  # the above can raise e.g. by try-except or systemexit
+                    if p.poll() is None:  # pragma: no cover
+                        p.kill()
+
+            else:  #  stop_policy == "kill":
+                # Just kill it
+                p.kill()
