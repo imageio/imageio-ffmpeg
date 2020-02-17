@@ -53,11 +53,6 @@ def get_ffmpeg_exe():
     )
 
 
-def _pre_exec():
-    # To ignore CTRL+C signal in the new process
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-
 def _popen_kwargs():
     startupinfo = None
     preexec_fn = None
@@ -71,7 +66,7 @@ def _popen_kwargs():
     else:
         # Prevent propagation of sigint (see #4)
         # https://stackoverflow.com/questions/5045771
-        preexec_fn = _pre_exec
+        preexec_fn = os.setpgrp  # the _pre_exec does not seem to work
     return {
         "startupinfo": startupinfo,
         "creationflags": creationflags,
