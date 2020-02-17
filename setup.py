@@ -48,7 +48,7 @@ setup(
     version=__version__,
     author="imageio contributors",
     author_email="almar.klein@gmail.com",
-    license="(new) BSD",
+    license="BSD-2-Clause",
     url="https://github.com/imageio/imageio-ffmpeg",
     download_url="http://pypi.python.org/pypi/imageio-ffmpeg",
     keywords="video ffmpeg",
