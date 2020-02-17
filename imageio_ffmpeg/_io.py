@@ -1,6 +1,7 @@
 import sys
 import time
 import signal
+import pathlib
 import subprocess
 
 from ._utils import get_ffmpeg_exe, logger
@@ -31,7 +32,10 @@ def count_frames_and_secs(path):
     """
     # https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg
 
-    assert isinstance(path, str), "Video path must be a string"
+    if isinstance(path, pathlib.PurePath):
+        path = str(path)
+    if not isinstance(path, str):
+        raise TypeError("Video path must be a string or pathlib.Path.")
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
     try:
@@ -60,7 +64,14 @@ def count_frames_and_secs(path):
     raise RuntimeError("Could not get number of frames")  # pragma: no cover
 
 
-def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_params=None, bits_per_pixel=None):
+def read_frames(
+    path,
+    pix_fmt="rgb24",
+    bpp=None,
+    input_params=None,
+    output_params=None,
+    bits_per_pixel=None,
+):
     """
     Create a generator to iterate over the frames in a video file.
     
@@ -106,7 +117,10 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
 
     # ----- Input args
 
-    assert isinstance(path, str), "Video path must be a string"
+    if isinstance(path, pathlib.PurePath):
+        path = str(path)
+    if not isinstance(path, str):
+        raise TypeError("Video path must be a string or pathlib.Path.")
     # Note: Dont check whether it exists. The source could be e.g. a camera.
 
     pix_fmt = pix_fmt or "rgb24"
@@ -163,7 +177,9 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
         w, h = meta["size"]
         framesize_bits = w * h * bits_per_pixel
         framesize_bytes = framesize_bits / 8
-        assert framesize_bytes.is_integer(), "incorrect bits_per_pixel, framesize in bytes must be an int"
+        assert (
+            framesize_bytes.is_integer()
+        ), "incorrect bits_per_pixel, framesize in bytes must be an int"
         framesize_bytes = int(framesize_bytes)
         framenr = 0
 
@@ -272,7 +288,10 @@ def write_frames(
 
     # ----- Input args
 
-    assert isinstance(path, str), "Video path must be a string"
+    if isinstance(path, pathlib.PurePath):
+        path = str(path)
+    if not isinstance(path, str):
+        raise TypeError("Video path must be a string or pathlib.Path.")
 
     # The pix_fmt_out yuv420p is the best for the outpur to work in
     # QuickTime and most other players. These players only support
@@ -407,7 +426,7 @@ def write_frames(
         while True:
 
             # Get frame
-            bb = (yield)
+            bb = yield
 
             # framesize = size[0] * size[1] * depth * bpp
             # assert isinstance(bb, bytes), "Frame must be send as bytes"
