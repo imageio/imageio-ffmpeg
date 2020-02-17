@@ -1,8 +1,9 @@
 import os
-from pkg_resources import resource_filename
 import sys
-import subprocess
+import signal
 import logging
+import subprocess
+from pkg_resources import resource_filename
 
 from ._definitions import get_platform, FNAME_PER_PLATFORM
 
@@ -52,13 +53,30 @@ def get_ffmpeg_exe():
     )
 
 
-def _pstartupinfo():
+def _pre_exec():
+    # To ignore CTRL+C signal in the new process
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
+def _popen_kwargs():
     startupinfo = None
-    if os.name == "nt":
-        # stops executable from flashing on Windows
+    preexec_fn = None
+    creationflags = 0
+    if sys.platform.startswith("win"):
+        # Stops executable from flashing on Windows (see #22)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    return startupinfo
+        # Prevent propagation of sigint (see #4)
+        creationflags = 0x00000200
+    else:
+        # Prevent propagation of sigint (see #4)
+        # https://stackoverflow.com/questions/5045771
+        preexec_fn = _pre_exec
+    return {
+        "startupinfo": startupinfo,
+        "creationflags": creationflags,
+        "preexec_fn": preexec_fn,
+    }
 
 
 def _is_valid_exe(exe):
@@ -66,7 +84,7 @@ def _is_valid_exe(exe):
     try:
         with open(os.devnull, "w") as null:
             subprocess.check_call(
-                cmd, stdout=null, stderr=subprocess.STDOUT, startupinfo=_pstartupinfo()
+                cmd, stdout=null, stderr=subprocess.STDOUT, **_popen_kwargs()
             )
         return True
     except (OSError, ValueError, subprocess.CalledProcessError):
@@ -78,9 +96,9 @@ def get_ffmpeg_version():
     Get the version of the used ffmpeg executable (as a string).
     """
     exe = get_ffmpeg_exe()
-    line = subprocess.check_output(
-        [exe, "-version"], startupinfo=_pstartupinfo()
-    ).split(b"\n", 1)[0]
+    line = subprocess.check_output([exe, "-version"], **_popen_kwargs()).split(
+        b"\n", 1
+    )[0]
     line = line.decode(errors="ignore").strip()
     version = line.split("version", 1)[-1].lstrip().split(" ", 1)[0].strip()
     return version

@@ -4,7 +4,7 @@ import signal
 import pathlib
 import subprocess
 
-from ._utils import get_ffmpeg_exe, _pstartupinfo, logger
+from ._utils import get_ffmpeg_exe, _popen_kwargs, logger
 from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
 
 
@@ -39,9 +39,7 @@ def count_frames_and_secs(path):
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
     try:
-        out = subprocess.check_output(
-            cmd, stderr=subprocess.STDOUT, startupinfo=_pstartupinfo()
-        )
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, **_popen_kwargs())
     except subprocess.CalledProcessError as err:
         out = err.output.decode(errors="ignore")
         raise RuntimeError("FFMEG call failed with {}:\n{}".format(err.returncode, out))
@@ -149,7 +147,7 @@ def read_frames(
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        startupinfo=_pstartupinfo(),
+        **_popen_kwargs()
     )
 
     log_catcher = LogCatcher(p.stderr)
@@ -217,6 +215,7 @@ def read_frames(
                 if True:
                     p.stdin.write(b"q")
                     p.stdin.close()
+                    # p.communicate(b"q")  # Better on Windows, but can hang on Linux
                 else:  # pragma: no cover
                     # I read somewhere that modern ffmpeg on Linux prefers a
                     # "ctrl-c", but tests so far suggests sending q is better.
@@ -409,7 +408,7 @@ def write_frames(
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=None,
-        startupinfo=_pstartupinfo(),
+        **_popen_kwargs()
     )
 
     # Note that directing stderr to a pipe on windows will cause ffmpeg
