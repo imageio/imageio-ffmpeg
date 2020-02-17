@@ -197,7 +197,8 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
             # Ask ffmpeg to quit
             try:
                 if True:
-                    p.communicate(b"q")
+                    p.stdin.write(b"q")
+                    p.stdin.close()
                 else:  # pragma: no cover
                     # I read somewhere that modern ffmpeg on Linux prefers a
                     # "ctrl-c", but tests so far suggests sending q is better.
@@ -214,6 +215,7 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
             if p.poll() is None:  # pragma: no cover
                 logger.warning("We had to kill ffmpeg to stop it.")
                 p.kill()
+                p.wait()
 
 
 def write_frames(
