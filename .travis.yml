@@ -80,7 +80,7 @@ install:
         export PATH=/c/Python38:/c/Python38/Scripts:/c/Python37:/c/Python37/Scripts:$PATH;
       fi;
     # Install dependencies depending on ENV
-    - pip install -U pip
+    # - pip install -U pip -> not allowed on Windows (?)
     - pip install invoke
     - if [ "${TEST_UNIT}" == "1" ]; then
         pip install -q psutil;
