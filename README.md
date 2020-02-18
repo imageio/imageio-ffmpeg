@@ -45,7 +45,7 @@ If you don't want to install the included ffmpeg, you can use pip with
 `IMAGEIO_FFMPEG_EXE` environment variable if needed.
 
 
-## Usage
+## Example usage
 
 The `imageio_ffmpeg` library provides low level functionality to read
 and write video data, using Python generators:
@@ -67,6 +67,8 @@ for frame in frames:
 writer.close()  # don't forget this
 ```
 
+(Also see the API section further down.)
+
 
 ## How it works
 
@@ -79,6 +81,21 @@ wraps ffmpeg at the C level.
 
 Note that because of how `imageio-ffmpeg` works, `read_frames()` and
 `write_frames()` only accept file names, and not file (like) objects.
+
+
+
+## imageio-ffmpeg for enterprise
+
+Available as part of the Tidelift Subscription
+
+The maintainers of imageio-ffmpeg and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/pypi-imageio-ffmpeg?utm_source=pypi-imageio-ffmpeg&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
+
+
+## Security contact information
+
+To report a security vulnerability, please use the
+[Tidelift security contact](https://tidelift.com/security).
+Tidelift will coordinate the fix and disclosure.
 
 
 ## API
