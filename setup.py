@@ -58,7 +58,7 @@ setup(
     provides=["imageio_ffmpeg"],
     python_requires=">=3.4",
     setup_requires=["pip>19"],
-    install_requires=[],  # todo: maybe numpy
+    install_requires=[],
     packages=["imageio_ffmpeg"],
     package_dir={"imageio_ffmpeg": "imageio_ffmpeg"},
     package_data={"imageio_ffmpeg": ["binaries/*.*"]},
@@ -79,5 +79,6 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 )
