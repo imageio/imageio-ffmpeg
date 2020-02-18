@@ -77,20 +77,30 @@ making distribution and installation *much* easier. And probably
 the code itself too. In contrast, [PyAV](https://github.com/mikeboers/PyAV)
 wraps ffmpeg at the C level.
 
+Note that because of how `imageio-ffmpeg` works, `read_frames()` and
+`write_frames()` only accept file names, and not file (like) objects.
+
 
 ## API
 
 ```py
-def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=None):
+def read_frames(
+    path,
+    pix_fmt="rgb24",
+    bpp=None,
+    input_params=None,
+    output_params=None,
+    bits_per_pixel=None,
+):
     """
     Create a generator to iterate over the frames in a video file.
     
     It first yields a small metadata dictionary that contains:
     
-    * ffmpeg_version: the ffmpeg version is use (as a string).
-    * codec: a hint about the codec used to encode the video, e.g. "h264"
-    * source_size: the width and height of the encoded video frames
-    * size: the width and height of the frames that will be produced
+    * ffmpeg_version: the ffmpeg version in use (as a string).
+    * codec: a hint about the codec used to encode the video, e.g. "h264".
+    * source_size: the width and height of the encoded video frames.
+    * size: the width and height of the frames that will be produced.
     * fps: the frames per second. Can be zero if it could not be detected.
     * duration: duration in seconds. Can be zero if it could not be detected.
     
@@ -113,13 +123,16 @@ def read_frames(path, pix_fmt="rgb24", bpp=3, input_params=None, output_params=N
             print(len(frame))
     
     Parameters:
-        path (str): the file to write to.
+        path (str): the filename of the file to read from.
         pix_fmt (str): the pixel format of the frames to be read.
             The default is "rgb24" (frames are uint8 RGB images).
-        bpp (int): The number of bytes per pixel in the output frames.
-            This depends on the given pix_fmt. Default is 3 (RGB).
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
+        bits_per_pixel (int): The number of bits per pixel in the output frames.
+            This depends on the given pix_fmt. Default is 24 (RGB)
+        bpp (int): DEPRECATED, USE bits_per_pixel INSTEAD. The number of bytes per pixel in the output frames.
+            This depends on the given pix_fmt. Some pixel formats like yuv420p have 12 bits per pixel
+            and cannot be set in bytes as integer. For this reason the bpp argument is deprecated.
     """
 ```
 
@@ -135,7 +148,7 @@ def write_frames(
     codec=None,
     macro_block_size=16,
     ffmpeg_log_level="warning",
-    ffmpeg_timeout=20.0,
+    ffmpeg_timeout=0,
     input_params=None,
     output_params=None,
 ):
@@ -155,7 +168,7 @@ def write_frames(
         gen.close()  # don't forget this
     
     Parameters:
-        path (str): the file to write to.
+        path (str): the filename to write to.
         size (tuple): the width and height of the frames.
         pix_fmt_in (str): the pixel format of incoming frames.
             E.g. "gray", "gray8a", "rgb24", or "rgba". Default "rgb24".
@@ -170,8 +183,8 @@ def write_frames(
             to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level. Default "warning".
         ffmpeg_timeout (float): Timeout in seconds to wait for ffmpeg process
-            to finish. Value of 0 will wait forever. The time that ffmpeg needs
-            depends on CPU speed, compression, and frame size. Default 20.0.
+            to finish. Value of 0 will wait forever (default). The time that
+            ffmpeg needs depends on CPU speed, compression, and frame size.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
     """
@@ -192,7 +205,7 @@ def count_frames_and_secs(path):
 ```py
 def get_ffmpeg_exe():
     """
-    Get the ffmpeg executable file. This can be the binary defined by 
+    Get the ffmpeg executable file. This can be the binary defined by
     the IMAGEIO_FFMPEG_EXE environment variable, the binary distributed
     with imageio-ffmpeg, an ffmpeg binary installed with conda, or the
     system ffmpeg (in that order). A RuntimeError is raised if no valid
