@@ -1,6 +1,5 @@
 import sys
 import time
-import signal
 import pathlib
 import subprocess
 
@@ -152,6 +151,10 @@ def read_frames(
 
     log_catcher = LogCatcher(p.stderr)
 
+    # Enter try block directly after opening the process.
+    # We terminate ffmpeg in the finally clause.
+    # Generators are automatically closed when they get deleted,
+    # so the finally block is guaranteed to run.
     try:
 
         # ----- Load meta data
@@ -205,23 +208,25 @@ def read_frames(
                 raise RuntimeError(fmt.format(framenr, err1, err2))
 
     finally:
-        # Generators are automatically closed when they get deleted,
-        # so this code is almost guaranteed to run.
 
+        # Make sure that ffmpeg is terminated.
         if p.poll() is None:
 
             # Ask ffmpeg to quit
             try:
-                if True:
-                    p.stdin.write(b"q")
-                    p.stdin.close()
-                    # p.communicate(b"q")  # Better on Windows, but can hang on Linux
-                else:  # pragma: no cover
-                    # I read somewhere that modern ffmpeg on Linux prefers a
-                    # "ctrl-c", but tests so far suggests sending q is better.
-                    p.send_signal(signal.SIGINT)
+                # I read somewhere that modern ffmpeg on Linux prefers a
+                # "ctrl-c", but tests so far suggests sending q is more robust.
+                # > p.send_signal(signal.SIGINT)
+                # Sending q via communicate works, but can hang (see #17)
+                # > p.communicate(b"q")
+                # So let's do similar to what communicate does, but without
+                # reading stdout (which may block). It looks like only closing
+                # stdout is enough (tried Windows+Linux), but let's play safe.
+                p.stdin.write(b"q")
+                p.stdin.close()
+                p.stdout.close()
             except Exception as err:  # pragma: no cover
-                logger.warning("Error while attempting stop ffmpeg: " + str(err))
+                logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
 
             # Wait for it to stop
             etime = time.time() + 1.5
@@ -418,13 +423,17 @@ def write_frames(
     # (tried on Windows and Linux). I suspect that ffmpeg buffers
     # multiple frames (before encoding in a batch).
 
-    # Init policy by which to terminate ffmpeg
+    # Init policy by which to terminate ffmpeg. May be set to "kill" later.
     stop_policy = "timeout"
     if not ffmpeg_timeout:
         stop_policy = "wait"
 
     # ----- Write frames
 
+    # Enter try block directly after opening the process.
+    # We terminate ffmpeg in the finally clause.
+    # Generators are automatically closed when they get deleted,
+    # so the finally block is guaranteed to run.
     try:
 
         # Just keep going until the generator.close() is called (raises GeneratorExit).
@@ -455,22 +464,25 @@ def write_frames(
             nframes += 1
 
     except GeneratorExit:
+        # Detect premature closing
         if nframes == 0:
             logger.warning("No frames have been written; the written video is invalid.")
 
     except BaseException:
+        # Detect KeyboardInterrupt / SystemExit: don't wait for ffmpeg to quit
         stop_policy = "kill"
         raise
 
     finally:
 
+        # Make sure that ffmpeg is terminated.
         if p.poll() is None:
 
-            # First close stdin
+            # Tell ffmpeg that we're done
             try:
                 p.stdin.close()
-            except Exception:  # pragma: no cover
-                pass
+            except Exception as err:  # pragma: no cover
+                logger.warning("Error while attempting stop ffmpeg (w): " + str(err))
 
             if stop_policy == "timeout":
                 # Wait until timeout, produce a warning and kill if it still exists
@@ -488,11 +500,11 @@ def write_frames(
                         p.kill()
 
             elif stop_policy == "wait":
-                # Wait forever, kill if it still exists
+                # Wait forever, kill if it if we're interrupted
                 try:
                     while p.poll() is None:
                         time.sleep(0.01)
-                finally:  # the above can raise e.g. by try-except or systemexit
+                finally:  # the above can raise e.g. by ctrl-c or systemexit
                     if p.poll() is None:  # pragma: no cover
                         p.kill()
 

@@ -1,6 +1,5 @@
 import os
 import sys
-import signal
 import logging
 import subprocess
 from pkg_resources import resource_filename
