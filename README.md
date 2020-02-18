@@ -97,10 +97,10 @@ def read_frames(
     
     It first yields a small metadata dictionary that contains:
     
-    * ffmpeg_version: the ffmpeg version is use (as a string).
-    * codec: a hint about the codec used to encode the video, e.g. "h264"
-    * source_size: the width and height of the encoded video frames
-    * size: the width and height of the frames that will be produced
+    * ffmpeg_version: the ffmpeg version in use (as a string).
+    * codec: a hint about the codec used to encode the video, e.g. "h264".
+    * source_size: the width and height of the encoded video frames.
+    * size: the width and height of the frames that will be produced.
     * fps: the frames per second. Can be zero if it could not be detected.
     * duration: duration in seconds. Can be zero if it could not be detected.
     
@@ -123,7 +123,7 @@ def read_frames(
             print(len(frame))
     
     Parameters:
-        path (str): the file path to read from.
+        path (str): the filename of the file to read from.
         pix_fmt (str): the pixel format of the frames to be read.
             The default is "rgb24" (frames are uint8 RGB images).
         input_params (list): Additional ffmpeg input command line parameters.
@@ -168,7 +168,7 @@ def write_frames(
         gen.close()  # don't forget this
     
     Parameters:
-        path (str): the file to write to.
+        path (str): the filename to write to.
         size (tuple): the width and height of the frames.
         pix_fmt_in (str): the pixel format of incoming frames.
             E.g. "gray", "gray8a", "rgb24", or "rgba". Default "rgb24".
