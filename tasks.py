@@ -121,20 +121,25 @@ def get_ffmpeg_binary(ctx):
     source_dir = os.path.abspath(
         os.path.join(ROOT_DIR, "..", "imageio-binaries", "ffmpeg")
     )
-    if os.path.isdir(source_dir):
-        copy_binaries(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"), fname)
-        return
+    # if os.path.isdir(source_dir):
+    #     copy_binaries(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"), fname)
+    #     return
 
     # Download from Github
     base_url = "https://github.com/imageio/imageio-binaries/raw/master/ffmpeg/"
-    filename = os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries", fname)
-    print("Downloading", fname, "...", end="")
-    with urlopen(base_url + fname, timeout=5) as f1:
-        with open(filename, "wb") as f2:
-            shutil.copyfileobj(f1, f2)
-    # Mark executable
-    os.chmod(filename, os.stat(filename).st_mode | 64)
-    print("done")
+    for fname2 in (fname, "msvcr100.dll", "msvcr110.dll"):
+        if ".dll" in fname2 and not sys.platform.startswith("win"):
+            continue
+        if ".dll" in fname2:
+            base_url = "https://github.com/FlorianRhiem/pyGLFW/blob/master/vcredist/"
+        filename = os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries", fname2)
+        print("Downloading", fname2, "...", end="")
+        with urlopen(base_url + fname2, timeout=5) as f1:
+            with open(filename, "wb") as f2:
+                shutil.copyfileobj(f1, f2)
+        # Mark executable
+        os.chmod(filename, os.stat(filename).st_mode | 64)
+        print("done")
 
 
 @task
