@@ -20,9 +20,9 @@ matrix:
       python: "3.6"
       env: TEST_UNIT=0 TEST_STYLE=1
     # Special OS'es / interpreters
-    - os: windows
-      language: bash
-      env: TEST_UNIT=1
+    # - os: windows -> does not work, calling ffmpeg.exe fails with exitcode 3221225781 (missing library?)
+    #   language: bash
+    #   env: TEST_UNIT=1
     - os: linux
       python: "pypy3"
       env: TEST_UNIT=1

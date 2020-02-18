@@ -28,7 +28,6 @@ def get_ffmpeg_exe():
     # 2. Try from here
     bin_dir = resource_filename("imageio_ffmpeg", "binaries")
     exe = os.path.join(bin_dir, FNAME_PER_PLATFORM.get(plat, ""))
-
     if exe and os.path.isfile(exe) and _is_valid_exe(exe):
         return exe
 
