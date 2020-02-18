@@ -117,7 +117,9 @@ def test_reading5():
     # Same as 1, but using other pixel format and bits_per_pixel
     bits_per_pixel = 12
     bits_per_bytes = 8
-    gen = imageio_ffmpeg.read_frames(test_file3, pix_fmt="yuv420p", bits_per_pixel=bits_per_pixel)
+    gen = imageio_ffmpeg.read_frames(
+        test_file3, pix_fmt="yuv420p", bits_per_pixel=bits_per_pixel
+    )
 
     meta = gen.__next__()
     assert isinstance(meta, dict)

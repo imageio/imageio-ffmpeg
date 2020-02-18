@@ -1,9 +1,9 @@
 import sys
 import time
-import signal
+import pathlib
 import subprocess
 
-from ._utils import get_ffmpeg_exe, logger
+from ._utils import get_ffmpeg_exe, _popen_kwargs, logger
 from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
 
 
@@ -31,11 +31,14 @@ def count_frames_and_secs(path):
     """
     # https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg
 
-    assert isinstance(path, str), "Video path must be a string"
+    if isinstance(path, pathlib.PurePath):
+        path = str(path)
+    if not isinstance(path, str):
+        raise TypeError("Video path must be a string or pathlib.Path.")
 
     cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
     try:
-        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=ISWIN)
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, **_popen_kwargs())
     except subprocess.CalledProcessError as err:
         out = err.output.decode(errors="ignore")
         raise RuntimeError("FFMEG call failed with {}:\n{}".format(err.returncode, out))
@@ -60,7 +63,14 @@ def count_frames_and_secs(path):
     raise RuntimeError("Could not get number of frames")  # pragma: no cover
 
 
-def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_params=None, bits_per_pixel=None):
+def read_frames(
+    path,
+    pix_fmt="rgb24",
+    bpp=None,
+    input_params=None,
+    output_params=None,
+    bits_per_pixel=None,
+):
     """
     Create a generator to iterate over the frames in a video file.
     
@@ -106,7 +116,10 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
 
     # ----- Input args
 
-    assert isinstance(path, str), "Video path must be a string"
+    if isinstance(path, pathlib.PurePath):
+        path = str(path)
+    if not isinstance(path, str):
+        raise TypeError("Video path must be a string or pathlib.Path.")
     # Note: Dont check whether it exists. The source could be e.g. a camera.
 
     pix_fmt = pix_fmt or "rgb24"
@@ -133,11 +146,18 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        shell=ISWIN,
+        **_popen_kwargs()
     )
 
     log_catcher = LogCatcher(p.stderr)
 
+    # Init policy by which to terminate ffmpeg. May be set to "kill" later.
+    stop_policy = "timeout"  # not wait; ffmpeg should be able to quit quickly
+
+    # Enter try block directly after opening the process.
+    # We terminate ffmpeg in the finally clause.
+    # Generators are automatically closed when they get deleted,
+    # so the finally block is guaranteed to run.
     try:
 
         # ----- Load meta data
@@ -163,7 +183,9 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
         w, h = meta["size"]
         framesize_bits = w * h * bits_per_pixel
         framesize_bytes = framesize_bits / 8
-        assert framesize_bytes.is_integer(), "incorrect bits_per_pixel, framesize in bytes must be an int"
+        assert (
+            framesize_bytes.is_integer()
+        ), "incorrect bits_per_pixel, framesize in bytes must be an int"
         framesize_bytes = int(framesize_bytes)
         framenr = 0
 
@@ -188,34 +210,54 @@ def read_frames(path, pix_fmt="rgb24", bpp=None, input_params=None, output_param
                 fmt = "Could not read frame {}:\n{}\n=== stderr ===\n{}"
                 raise RuntimeError(fmt.format(framenr, err1, err2))
 
-    finally:
-        # Generators are automatically closed when they get deleted,
-        # so this code is almost guaranteed to run.
+    except GeneratorExit:
+        # Note that GeneratorExit does not inherit from Exception but BaseException
+        pass
 
+    except Exception:
+        # Normal exceptions fall through
+        raise
+
+    except BaseException:
+        # Detect KeyboardInterrupt / SystemExit: don't wait for ffmpeg to quit
+        stop_policy = "kill"
+        raise
+
+    finally:
+
+        # Make sure that ffmpeg is terminated.
         if p.poll() is None:
 
             # Ask ffmpeg to quit
             try:
-                if True:
-                    p.stdin.write(b"q")
-                    p.stdin.close()
-                else:  # pragma: no cover
-                    # I read somewhere that modern ffmpeg on Linux prefers a
-                    # "ctrl-c", but tests so far suggests sending q is better.
-                    p.send_signal(signal.SIGINT)
+                # I read somewhere that modern ffmpeg on Linux prefers a
+                # "ctrl-c", but tests so far suggests sending q is more robust.
+                # > p.send_signal(signal.SIGINT)
+                # Sending q via communicate works, but can hang (see #17)
+                # > p.communicate(b"q")
+                # So let's do similar to what communicate does, but without
+                # reading stdout (which may block). It looks like only closing
+                # stdout is enough (tried Windows+Linux), but let's play safe.
+                p.stdin.write(b"q")
+                p.stdin.close()
+                p.stdout.close()
             except Exception as err:  # pragma: no cover
-                logger.warning("Error while attempting stop ffmpeg: " + str(err))
+                logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
 
-            # Wait for it to stop
-            etime = time.time() + 1.5
-            while time.time() < etime and p.poll() is None:
-                time.sleep(0.01)
+            if stop_policy == "timeout":
+                # Wait until timeout, produce a warning and kill if it still exists
+                try:
+                    etime = time.time() + 1.5
+                    while time.time() < etime and p.poll() is None:
+                        time.sleep(0.01)
+                finally:
+                    if p.poll() is None:  # pragma: no cover
+                        logger.warning("We had to kill ffmpeg to stop it.")
+                        p.kill()
 
-            # Grr, we have to kill it
-            if p.poll() is None:  # pragma: no cover
-                logger.warning("We had to kill ffmpeg to stop it.")
+            else:  # stop_policy == "kill"
+                # Just kill it
                 p.kill()
-                p.wait()
 
 
 def write_frames(
@@ -229,7 +271,7 @@ def write_frames(
     codec=None,
     macro_block_size=16,
     ffmpeg_log_level="warning",
-    ffmpeg_timeout=20.0,
+    ffmpeg_timeout=0,
     input_params=None,
     output_params=None,
 ):
@@ -264,15 +306,18 @@ def write_frames(
             to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level. Default "warning".
         ffmpeg_timeout (float): Timeout in seconds to wait for ffmpeg process
-            to finish. Value of 0 will wait forever. The time that ffmpeg needs
-            depends on CPU speed, compression, and frame size. Default 20.0.
+            to finish. Value of 0 will wait forever (default). The time that
+            ffmpeg needs depends on CPU speed, compression, and frame size.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
     """
 
     # ----- Input args
 
-    assert isinstance(path, str), "Video path must be a string"
+    if isinstance(path, pathlib.PurePath):
+        path = str(path)
+    if not isinstance(path, str):
+        raise TypeError("Video path must be a string or pathlib.Path.")
 
     # The pix_fmt_out yuv420p is the best for the outpur to work in
     # QuickTime and most other players. These players only support
@@ -385,20 +430,31 @@ def write_frames(
 
     # Launch process
     p = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None, shell=ISWIN
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=None,
+        **_popen_kwargs()
     )
 
-    # For Windows, set `shell=True` in sp.Popen to prevent popup
-    # of a command line window in frozen applications.
     # Note that directing stderr to a pipe on windows will cause ffmpeg
     # to hang if the buffer is not periodically cleared using
     # StreamCatcher or other means.
     # Setting bufsize to 0 or a small value does not seem to have much effect
-    # (at least on Windows). I suspect that ffmpeg buffers # multiple frames
-    # (before encoding in a batch).
+    # (tried on Windows and Linux). I suspect that ffmpeg buffers
+    # multiple frames (before encoding in a batch).
+
+    # Init policy by which to terminate ffmpeg. May be set to "kill" later.
+    stop_policy = "timeout"
+    if not ffmpeg_timeout:
+        stop_policy = "wait"
 
     # ----- Write frames
 
+    # Enter try block directly after opening the process.
+    # We terminate ffmpeg in the finally clause.
+    # Generators are automatically closed when they get deleted,
+    # so the finally block is guaranteed to run.
     try:
 
         # Just keep going until the generator.close() is called (raises GeneratorExit).
@@ -407,7 +463,7 @@ def write_frames(
         while True:
 
             # Get frame
-            bb = (yield)
+            bb = yield
 
             # framesize = size[0] * size[1] * depth * bpp
             # assert isinstance(bb, bytes), "Frame must be send as bytes"
@@ -429,29 +485,55 @@ def write_frames(
             nframes += 1
 
     except GeneratorExit:
+        # Note that GeneratorExit does not inherit from Exception but BaseException
+        # Detect premature closing
         if nframes == 0:
             logger.warning("No frames have been written; the written video is invalid.")
+
+    except Exception:
+        # Normal exceptions fall through
+        raise
+
+    except BaseException:
+        # Detect KeyboardInterrupt / SystemExit: don't wait for ffmpeg to quit
+        stop_policy = "kill"
+        raise
+
     finally:
 
+        # Make sure that ffmpeg is terminated.
         if p.poll() is None:
 
-            # Ask ffmpeg to quit - and wait for it to finish writing the file.
-            # Depending on the frame size and encoding this can take a few
-            # seconds (sometimes 10-20). Since a user may get bored and hit
-            # Ctrl-C, we wrap this in a try-except.
-            waited = False
+            # Tell ffmpeg that we're done
             try:
+                p.stdin.close()
+            except Exception as err:  # pragma: no cover
+                logger.warning("Error while attempting stop ffmpeg (w): " + str(err))
+
+            if stop_policy == "timeout":
+                # Wait until timeout, produce a warning and kill if it still exists
                 try:
-                    p.stdin.close()
-                except Exception:  # pragma: no cover
-                    pass
-                etime = time.time() + ffmpeg_timeout
-                while (not ffmpeg_timeout or time.time() < etime) and p.poll() is None:
-                    time.sleep(0.01)
-                waited = True
-            finally:
-                # Grr, we have to kill it
-                if p.poll() is None:  # pragma: no cover
-                    more = " Consider increasing ffmpeg_timeout." if waited else ""
-                    logger.warning("We had to kill ffmpeg to stop it." + more)
-                    p.kill()
+                    etime = time.time() + ffmpeg_timeout
+                    while (time.time() < etime) and p.poll() is None:
+                        time.sleep(0.01)
+                finally:
+                    if p.poll() is None:  # pragma: no cover
+                        logger.warning(
+                            "We had to kill ffmpeg to stop it. "
+                            + "Consider increasing ffmpeg_timeout, "
+                            + "or setting it to zero (no timeout)."
+                        )
+                        p.kill()
+
+            elif stop_policy == "wait":
+                # Wait forever, kill if it if we're interrupted
+                try:
+                    while p.poll() is None:
+                        time.sleep(0.01)
+                finally:  # the above can raise e.g. by ctrl-c or systemexit
+                    if p.poll() is None:  # pragma: no cover
+                        p.kill()
+
+            else:  #  stop_policy == "kill":
+                # Just kill it
+                p.kill()
