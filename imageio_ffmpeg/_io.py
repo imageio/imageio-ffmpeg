@@ -151,6 +151,9 @@ def read_frames(
 
     log_catcher = LogCatcher(p.stderr)
 
+    # Init policy by which to terminate ffmpeg. May be set to "kill" later.
+    stop_policy = "timeout"  # not wait; ffmpeg should be able to quit quickly
+
     # Enter try block directly after opening the process.
     # We terminate ffmpeg in the finally clause.
     # Generators are automatically closed when they get deleted,
@@ -207,6 +210,19 @@ def read_frames(
                 fmt = "Could not read frame {}:\n{}\n=== stderr ===\n{}"
                 raise RuntimeError(fmt.format(framenr, err1, err2))
 
+    except GeneratorExit:
+        # Note that GeneratorExit does not inherit from Exception but BaseException
+        pass
+
+    except Exception:
+        # Normal exceptions fall through
+        raise
+
+    except BaseException:
+        # Detect KeyboardInterrupt / SystemExit: don't wait for ffmpeg to quit
+        stop_policy = "kill"
+        raise
+
     finally:
 
         # Make sure that ffmpeg is terminated.
@@ -228,14 +244,19 @@ def read_frames(
             except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
 
-            # Wait for it to stop
-            etime = time.time() + 1.5
-            while time.time() < etime and p.poll() is None:
-                time.sleep(0.01)
+            if stop_policy == "timeout":
+                # Wait until timeout, produce a warning and kill if it still exists
+                try:
+                    etime = time.time() + 1.5
+                    while time.time() < etime and p.poll() is None:
+                        time.sleep(0.01)
+                finally:
+                    if p.poll() is None:  # pragma: no cover
+                        logger.warning("We had to kill ffmpeg to stop it.")
+                        p.kill()
 
-            # Grr, we have to kill it
-            if p.poll() is None:  # pragma: no cover
-                logger.warning("We had to kill ffmpeg to stop it.")
+            else:  # stop_policy == "kill"
+                # Just kill it
                 p.kill()
 
 
@@ -464,9 +485,14 @@ def write_frames(
             nframes += 1
 
     except GeneratorExit:
+        # Note that GeneratorExit does not inherit from Exception but BaseException
         # Detect premature closing
         if nframes == 0:
             logger.warning("No frames have been written; the written video is invalid.")
+
+    except Exception:
+        # Normal exceptions fall through
+        raise
 
     except BaseException:
         # Detect KeyboardInterrupt / SystemExit: don't wait for ffmpeg to quit
