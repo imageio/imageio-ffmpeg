@@ -271,7 +271,7 @@ def write_frames(
     codec=None,
     macro_block_size=16,
     ffmpeg_log_level="warning",
-    ffmpeg_timeout=0,
+    ffmpeg_timeout=None,
     input_params=None,
     output_params=None,
 ):
@@ -306,7 +306,7 @@ def write_frames(
             to 1 to avoid block alignment, though this is not recommended.
         ffmpeg_log_level (str): The ffmpeg logging level. Default "warning".
         ffmpeg_timeout (float): Timeout in seconds to wait for ffmpeg process
-            to finish. Value of 0 will wait forever (default). The time that
+            to finish. Value of 0 or None will wait forever (default). The time that
             ffmpeg needs depends on CPU speed, compression, and frame size.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
@@ -335,6 +335,7 @@ def write_frames(
     ffmpeg_log_level = ffmpeg_log_level or "warning"
     input_params = input_params or []
     output_params = output_params or []
+    ffmpeg_timeout = ffmpeg_timeout or 0
 
     floatish = float, int
     if isinstance(size, (tuple, list)):
