@@ -19,13 +19,14 @@ have_downloaded = False
 
 def ensure_test_files():
     global have_downloaded
-    bb = urlopen(test_url1, timeout=5).read()
-    with open(test_file1, "wb") as f:
-        f.write(bb)
-    bb = urlopen(test_url2, timeout=5).read()
-    with open(test_file3, "wb") as f:
-        f.write(bb)
-    have_downloaded = True
+    if not have_downloaded:
+        bb = urlopen(test_url1, timeout=5).read()
+        with open(test_file1, "wb") as f:
+            f.write(bb)
+        bb = urlopen(test_url2, timeout=5).read()
+        with open(test_file3, "wb") as f:
+            f.write(bb)
+        have_downloaded = True
 
 
 class OurMemoryHandler(logging.handlers.MemoryHandler):
