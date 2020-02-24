@@ -52,7 +52,7 @@ def get_ffmpeg_exe():
     )
 
 
-def _popen_kwargs():
+def _popen_kwargs(prevent_sigint=False):
     startupinfo = None
     preexec_fn = None
     creationflags = 0
@@ -60,12 +60,13 @@ def _popen_kwargs():
         # Stops executable from flashing on Windows (see #22)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        # Prevent propagation of sigint (see #4)
-        creationflags = 0x00000200
-    else:
+    if prevent_sigint:
         # Prevent propagation of sigint (see #4)
         # https://stackoverflow.com/questions/5045771
-        preexec_fn = os.setpgrp  # the _pre_exec does not seem to work
+        if sys.platform.startswith("win"):
+            creationflags = 0x00000200
+        else:
+            preexec_fn = os.setpgrp  # the _pre_exec does not seem to work
     return {
         "startupinfo": startupinfo,
         "creationflags": creationflags,
