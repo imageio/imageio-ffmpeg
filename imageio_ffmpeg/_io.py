@@ -146,7 +146,7 @@ def read_frames(
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        **_popen_kwargs()
+        **_popen_kwargs(prevent_sigint=True)
     )
 
     log_catcher = LogCatcher(p.stderr)
@@ -437,7 +437,7 @@ def write_frames(
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=None,
-        **_popen_kwargs()
+        **_popen_kwargs(prevent_sigint=True)
     )
 
     # Note that directing stderr to a pipe on windows will cause ffmpeg
