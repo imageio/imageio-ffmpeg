@@ -3,11 +3,7 @@
 Tests specific to parsing ffmpeg header.
 """
 
-import os
-
 from imageio_ffmpeg._parsing import cvsecs, limit_lines, parse_ffmpeg_header
-
-from pytest import skip
 
 
 def dedent(text, dedent=8):
