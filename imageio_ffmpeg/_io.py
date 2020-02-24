@@ -238,9 +238,11 @@ def read_frames(
                 # So let's do similar to what communicate does, but without
                 # reading stdout (which may block). It looks like only closing
                 # stdout is enough (tried Windows+Linux), but let's play safe.
-                p.stdin.write(b"q")
-                p.stdin.close()
+                # Found that writing to stdin can cause "Invalid argument" on
+                # Windows # and "Broken Pipe" on Unix.
+                # p.stdin.write(b"q")  # commented out in v0.4.1
                 p.stdout.close()
+                p.stdin.close()
             except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
 
