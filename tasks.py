@@ -27,7 +27,7 @@ if not os.path.isdir(os.path.join(ROOT_DIR, LIBNAME)):
 def test(ctx, cover=False):
     """Perform unit tests. Use --cover to open a webbrowser to show coverage.
     """
-    cmd = [sys.executable, "-m", "pytest", "tests"]
+    cmd = [sys.executable, "-m", "pytest", "tests", "-v"]
     cmd += ["--cov=" + LIBNAME, "--cov-report=term", "--cov-report=html"]
     ret_code = subprocess.call(cmd, cwd=ROOT_DIR)
     if ret_code:

@@ -1,49 +1,37 @@
-import os
+"""
+The main tests for the public API.
+"""
+
+import time
 import types
 import tempfile
-import time
-from urllib.request import urlopen
-
-from pytest import skip, raises
 
 import imageio_ffmpeg
 
-
-if os.getenv("TRAVIS_OS_NAME") == "windows":
-    skip(
-        "Skip this on the Travis Windows run for now, see #408", allow_module_level=True
-    )
-
-
-test_dir = tempfile.gettempdir()
-test_url1 = "https://raw.githubusercontent.com/imageio/imageio-binaries/master/images/cockatoo.mp4"
-test_url2 = "https://raw.githubusercontent.com/imageio/imageio-binaries/master/images/realshort.mp4"
-test_file1 = os.path.join(test_dir, "cockatoo.mp4")
-test_file2 = os.path.join(test_dir, "test.mp4")
-test_file3 = os.path.join(test_dir, "realshort.mp4")
+from pytest import skip, raises
+from testutils import no_warnings_allowed
+from testutils import ensure_test_files, test_dir, test_file1, test_file2, test_file3
 
 
 def setup_module():
-    bb = urlopen(test_url1, timeout=5).read()
-    with open(test_file1, "wb") as f:
-        f.write(bb)
-    bb = urlopen(test_url2, timeout=5).read()
-    with open(test_file3, "wb") as f:
-        f.write(bb)
+    ensure_test_files()
 
 
+@no_warnings_allowed
 def test_ffmpeg_version():
     version = imageio_ffmpeg.get_ffmpeg_version()
     print("ffmpeg version", version)
     assert version > "3.0"
 
 
+@no_warnings_allowed
 def test_read_nframes():
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file1)
     assert nframes == 280
     assert 13.80 < nsecs < 13.99
 
 
+@no_warnings_allowed
 def test_reading1():
 
     # Calling returns a generator
@@ -67,6 +55,7 @@ def test_reading1():
     assert count == 280
 
 
+@no_warnings_allowed
 def test_reading2():
     # Same as 1, but using other pixel format
 
@@ -83,6 +72,7 @@ def test_reading2():
     assert count == 280
 
 
+@no_warnings_allowed
 def test_reading3():
     # Same as 1, but using other fps
 
@@ -99,6 +89,7 @@ def test_reading3():
     assert 50 < count < 100  # because smaller fps, same duration
 
 
+@no_warnings_allowed
 def test_reading4():
     # Same as 1, but wrong, using an insane bpp, to invoke eof halfway a frame
 
@@ -113,6 +104,7 @@ def test_reading4():
     assert "ffmpeg version" in msg  # The log is included
 
 
+@no_warnings_allowed
 def test_reading5():
     # Same as 1, but using other pixel format and bits_per_pixel
     bits_per_pixel = 12
@@ -137,6 +129,7 @@ def test_reading5():
     assert count == 36
 
 
+@no_warnings_allowed
 def test_reading_invalid_video():
     """
     Check whether invalid video is
@@ -156,6 +149,7 @@ def test_reading_invalid_video():
     assert end - start < 1, "Metadata extraction hangs"
 
 
+@no_warnings_allowed
 def test_write1():
 
     for n in (1, 9, 14, 279, 280, 281):
@@ -184,6 +178,7 @@ def test_write1():
         assert count == n
 
 
+@no_warnings_allowed
 def test_write_pix_fmt_in():
 
     sizes = []
@@ -204,6 +199,7 @@ def test_write_pix_fmt_in():
     assert sizes[0] <= sizes[1] <= sizes[2]
 
 
+@no_warnings_allowed
 def test_write_pix_fmt_out():
 
     sizes = []
@@ -224,6 +220,7 @@ def test_write_pix_fmt_out():
     assert sizes[0] < sizes[1]
 
 
+@no_warnings_allowed
 def test_write_wmv():
     # Switch to MS friendly codec when writing .wmv files
 
@@ -240,6 +237,7 @@ def test_write_wmv():
         assert meta["codec"].startswith(codec)
 
 
+@no_warnings_allowed
 def test_write_quality():
 
     sizes = []
@@ -260,6 +258,7 @@ def test_write_quality():
     assert sizes[0] < sizes[1] < sizes[2]
 
 
+@no_warnings_allowed
 def test_write_bitrate():
 
     # Mind that we send uniform images, so the difference is marginal
@@ -282,6 +281,7 @@ def test_write_bitrate():
     assert sizes[0] < sizes[1] < sizes[2]
 
 
+# @no_warnings_allowed --> will generate warnings abiut macro block size
 def test_write_macro_block_size():
 
     frame_sizes = []
@@ -304,6 +304,7 @@ def test_write_macro_block_size():
     assert frame_sizes[1] == (40, 50)
 
 
+# @no_warnings_allowed --> Will generate a warning about killing ffmpeg
 def test_write_big_frames():
     """Test that we give ffmpeg enough time to finish."""
     try:
@@ -340,6 +341,10 @@ def test_write_big_frames():
     assert nframes == n
 
     _write_frames("rgba", 4, 15.0)
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == n
+
+    _write_frames("rgba", 4, None)  # the default os to wait (since v0.4.0)
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
     assert nframes == n
 

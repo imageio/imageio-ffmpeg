@@ -4,43 +4,29 @@ We should also run this test as a script, so we can confirm that ffmpeg
 quits nicely (instead of being killed).
 """
 
-import os
 import gc
-import tempfile
-from urllib.request import urlopen
-
-import psutil
 
 import imageio_ffmpeg
 
-test_dir = tempfile.gettempdir()
-test_url = "https://raw.githubusercontent.com/imageio/imageio-binaries/master/images/cockatoo.mp4"
-test_file1 = os.path.join(test_dir, "cockatoo.mp4")
-test_file2 = os.path.join(test_dir, "test.mp4")
+from testutils import no_warnings_allowed, get_ffmpeg_pids
+from testutils import ensure_test_files, test_file1, test_file2
+
 
 N = 2  # number of times to perform each test
 
 
-def get_ffmpeg_pids():
-    pids = set()
-    for p in psutil.process_iter():
-        if "ffmpeg" in p.name().lower():
-            pids.add(p.pid)
-    return pids
-
-
 def setup_module():
-    bb = urlopen(test_url, timeout=5).read()
-    with open(test_file1, "wb") as f:
-        f.write(bb)
+    ensure_test_files()
 
 
+@no_warnings_allowed
 def test_ffmpeg_version():
     version = imageio_ffmpeg.get_ffmpeg_version()
     print("ffmpeg version", version)
     assert version > "3.0"
 
 
+@no_warnings_allowed
 def test_reader_done():
 
     for i in range(N):
@@ -58,6 +44,7 @@ def test_reader_done():
         assert len(pids3) == 0
 
 
+@no_warnings_allowed
 def test_reader_close():
 
     for i in range(N):
@@ -74,6 +61,7 @@ def test_reader_close():
         assert len(pids3) == 0
 
 
+@no_warnings_allowed
 def test_reader_del():
 
     for i in range(N):
@@ -91,6 +79,7 @@ def test_reader_del():
         assert len(pids3) == 0
 
 
+@no_warnings_allowed
 def test_write_close():
 
     for i in range(N):
@@ -108,6 +97,7 @@ def test_write_close():
         assert len(pids3) == 0
 
 
+@no_warnings_allowed
 def test_write_del():
 
     for i in range(N):

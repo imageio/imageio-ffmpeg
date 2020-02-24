@@ -1,16 +1,9 @@
 # styletest: ignore E501
-""" Tests specific to parsing ffmpeg header.
+"""
+Tests specific to parsing ffmpeg header.
 """
 
-import os
-from pytest import skip
 from imageio_ffmpeg._parsing import cvsecs, limit_lines, parse_ffmpeg_header
-
-
-if os.getenv("TRAVIS_OS_NAME") == "windows":
-    skip(
-        "Skip this on the Travis Windows run for now, see #408", allow_module_level=True
-    )
 
 
 def dedent(text, dedent=8):
