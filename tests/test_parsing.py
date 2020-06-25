@@ -160,7 +160,7 @@ def test_get_correct_rotation():
     )
 
     info = parse_ffmpeg_header(sample)
-    assert info["roatation"] == 270
+    assert info["rotate"] == 270
 
 
 if __name__ == "__main__":
