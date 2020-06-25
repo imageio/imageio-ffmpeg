@@ -165,6 +165,14 @@ def parse_ffmpeg_header(text):
             )
         )
 
+    # get the rotation
+    reo_rotation = re.compile('rotate\s+:\s([0-9]+)')
+    match = reo_rotation.search(text)
+    rotation = 0
+    if match is not None:
+        rotation = match.groups()[0]
+    meta["rotation"] = rotation
+
     # get duration (in seconds)
     line = [l for l in lines if "Duration: " in l][0]
     match = re.search(" [0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9]", line)
