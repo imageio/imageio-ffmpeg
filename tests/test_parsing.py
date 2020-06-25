@@ -168,3 +168,4 @@ if __name__ == "__main__":
     test_limit_lines()
     test_get_correct_fps1()
     test_get_correct_fps2()
+    test_get_correct_rotation()
