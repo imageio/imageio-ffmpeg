@@ -24,7 +24,7 @@ def count_frames_and_secs(path):
     """
     Get the number of frames and number of seconds for the given video
     file. Note that this operation can be quite slow for large files.
-    
+
     Disclaimer: I've seen this produce different results from actually reading
     the frames with older versions of ffmpeg (2.x). Therefore I cannot say
     with 100% certainty that the returned values are always exact.
@@ -73,19 +73,19 @@ def read_frames(
 ):
     """
     Create a generator to iterate over the frames in a video file.
-    
+
     It first yields a small metadata dictionary that contains:
-    
+
     * ffmpeg_version: the ffmpeg version in use (as a string).
     * codec: a hint about the codec used to encode the video, e.g. "h264".
     * source_size: the width and height of the encoded video frames.
     * size: the width and height of the frames that will be produced.
     * fps: the frames per second. Can be zero if it could not be detected.
     * duration: duration in seconds. Can be zero if it could not be detected.
-    
+
     After that, it yields frames until the end of the video is reached. Each
     frame is a bytes object.
-    
+
     This function makes no assumptions about the number of frames in
     the data. For one because this is hard to predict exactly, but also
     because it may depend on the provided output_params. If you want
@@ -93,14 +93,14 @@ def read_frames(
     It is also possible to estimate the number of frames from the fps and
     duration, but note that even if both numbers are present, the resulting
     value is not always correct.
-    
+
     Example:
-        
+
         gen = read_frames(path)
         meta = gen.__next__()
         for frame in gen:
             print(len(frame))
-    
+
     Parameters:
         path (str): the filename of the file to read from.
         pix_fmt (str): the pixel format of the frames to be read.
@@ -279,19 +279,19 @@ def write_frames(
 ):
     """
     Create a generator to write frames (bytes objects) into a video file.
-    
+
     The frames are written by using the generator's `send()` method. Frames
     can be anything that can be written to a file. Typically these are
     bytes objects, but c-contiguous Numpy arrays also work.
-    
+
     Example:
-    
+
         gen = write_frames(path, size)
         gen.send(None)  # seed the generator
         for frame in frames:
             gen.send(frame)
         gen.close()  # don't forget this
-    
+
     Parameters:
         path (str): the filename to write to.
         size (tuple): the width and height of the frames.
@@ -540,3 +540,8 @@ def write_frames(
             else:  #  stop_policy == "kill":
                 # Just kill it
                 p.kill()
+        # Just to be safe, wrap in try/except
+        try:
+            p.stdout.close()
+        except Exception:
+            pass
