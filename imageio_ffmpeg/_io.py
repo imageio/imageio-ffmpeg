@@ -540,4 +540,8 @@ def write_frames(
             else:  #  stop_policy == "kill":
                 # Just kill it
                 p.kill()
-        p.stdout.close()
+        # Just to be safe, wrap in try/except
+        try:
+            p.stdout.close()
+        except Exception:
+            pass
