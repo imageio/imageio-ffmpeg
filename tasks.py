@@ -25,8 +25,7 @@ if not os.path.isdir(os.path.join(ROOT_DIR, LIBNAME)):
 
 @task
 def test(ctx, cover=False):
-    """Perform unit tests. Use --cover to open a webbrowser to show coverage.
-    """
+    """Perform unit tests. Use --cover to open a webbrowser to show coverage."""
     cmd = [sys.executable, "-m", "pytest", "tests", "-v"]
     cmd += ["--cov=" + LIBNAME, "--cov-report=term", "--cov-report=html"]
     ret_code = subprocess.call(cmd, cwd=ROOT_DIR)
@@ -40,8 +39,7 @@ def test(ctx, cover=False):
 
 @task
 def lint(ctx):
-    """ Validate the code style (e.g. undefined names)
-    """
+    """Validate the code style (e.g. undefined names)"""
     try:
         importlib.import_module("flake8")
     except ImportError:
@@ -61,24 +59,21 @@ def lint(ctx):
 
 @task
 def checkformat(ctx):
-    """ Check whether the code adheres to the style rules. Use autoformat to fix.
-    """
+    """Check whether the code adheres to the style rules. Use autoformat to fix."""
     print("Checking format with black (also see invoke autoformat):")
     black_wrapper(False)
 
 
 @task
 def autoformat(ctx):
-    """ Automatically format the code (using black).
-    """
+    """Automatically format the code (using black)."""
     print("Auto-formatting with black:")
     black_wrapper(True)
 
 
 @task
 def clean(ctx):
-    """ Clean the repo of temp files etc.
-    """
+    """Clean the repo of temp files etc."""
     for root, dirs, files in os.walk(ROOT_DIR):
         for dname in dirs:
             if dname in (
@@ -104,8 +99,7 @@ def clean(ctx):
 
 @task
 def get_ffmpeg_binary(ctx):
-    """ Download/copy ffmpeg binary for local development.
-    """
+    """Download/copy ffmpeg binary for local development."""
     # Get ffmpeg fname
     sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
     try:
@@ -139,8 +133,7 @@ def get_ffmpeg_binary(ctx):
 
 @task
 def build(ctx):
-    """ Build packages for different platforms. Dont release yet.
-    """
+    """Build packages for different platforms. Dont release yet."""
 
     # Get version and more
     sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
@@ -213,8 +206,7 @@ def build(ctx):
 
 @task
 def release(ctx):
-    """ Release the packages to Pypi!
-    """
+    """Release the packages to Pypi!"""
     dist_dir = os.path.join(ROOT_DIR, "dist")
     if not os.path.isdir(dist_dir):
         sys.exit("Dist directory does not exist. Build first?")
@@ -239,8 +231,7 @@ def release(ctx):
 
 @task
 def update_readme(ctx):
-    """Update readme to include the latest API docs.
-    """
+    """Update readme to include the latest API docs."""
     text = open(os.path.join(ROOT_DIR, "README.md"), "rb").read().decode()
     text = text.split("\n## API\n")[0] + "\n## API\n\n"
 
@@ -267,8 +258,7 @@ def update_readme(ctx):
 
 
 def black_wrapper(writeback):
-    """ Helper function to invoke black programatically.
-    """
+    """Helper function to invoke black programatically."""
 
     check = [] if writeback else ["--check"]
     exclude = "|".join(["cangivefilenameshere"])

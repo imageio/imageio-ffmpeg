@@ -6,7 +6,7 @@ from ._utils import logger
 
 
 class LogCatcher(threading.Thread):
-    """ Thread to keep reading from stderr so that the buffer does not
+    """Thread to keep reading from stderr so that the buffer does not
     fill up and stalls the ffmpeg process. On stderr a message is send
     on every few frames with some meta information. We only keep the
     last ones.
@@ -27,12 +27,11 @@ class LogCatcher(threading.Thread):
 
     @property
     def header(self):
-        """ Get header text. Empty string if the header is not yet parsed.
-        """
+        """Get header text. Empty string if the header is not yet parsed."""
         return self._header
 
     def get_text(self, timeout=0):
-        """ Get the whole text written to stderr so far. To preserve
+        """Get the whole text written to stderr so far. To preserve
         memory, only the last 50 to 100 frames are kept.
 
         If a timeout is given, wait for this thread to finish. When
@@ -93,15 +92,14 @@ def get_output_video_line(lines):
 
 
 def limit_lines(lines, N=32):
-    """ When number of lines > 2*N, reduce to N.
-    """
+    """When number of lines > 2*N, reduce to N."""
     if len(lines) > 2 * N:
         lines = [b"... showing only last few lines ..."] + lines[-N:]
     return lines
 
 
 def cvsecs(*args):
-    """ converts a time to second. Either cvsecs(min, secs) or
+    """converts a time to second. Either cvsecs(min, secs) or
     cvsecs(hours, mins, secs).
     """
     if len(args) == 1:
