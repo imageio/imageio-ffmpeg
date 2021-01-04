@@ -1,6 +1,6 @@
 # imageio-ffmpeg
 
-[![Build Status](https://travis-ci.org/imageio/imageio-ffmpeg.svg?branch=master)](https://travis-ci.org/imageio/imageio-ffmpeg)
+[![Build Status](https://github.com/imageio/imageio-ffmpeg/workflows/CI/badge.svg)](https://github.com/imageio/imageio-ffmpeg/actions)
 [![PyPI Version](https://img.shields.io/pypi/v/imageio-ffmpeg.svg)](https://pypi.python.org/pypi/imageio-ffmpeg/)
 
 FFMPEG wrapper for Python
