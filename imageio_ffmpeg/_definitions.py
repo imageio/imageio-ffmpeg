@@ -8,6 +8,8 @@ def get_platform():
     bits = struct.calcsize("P") * 8
     if sys.platform.startswith("linux"):
         return "linux{}".format(bits)
+    elif sys.platform.startswith("freebsd"):
+        return "freebsd{}".format(bits)
     elif sys.platform.startswith("win"):
         return "win{}".format(bits)
     elif sys.platform.startswith("cygwin"):
