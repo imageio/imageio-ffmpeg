@@ -276,6 +276,8 @@ def write_frames(
     ffmpeg_timeout=None,
     input_params=None,
     output_params=None,
+    audio_path=None,
+    audio_codec=None,
 ):
     """
     Create a generator to write frames (bytes objects) into a video file.
@@ -312,6 +314,8 @@ def write_frames(
             ffmpeg needs depends on CPU speed, compression, and frame size.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
+        audio_path (str): A input file path for encoding with an audio stream.
+        audio_codec (str): The audio codec to use if audio_path is provided.
     """
 
     # ----- Input args
@@ -373,11 +377,18 @@ def write_frames(
         default_codec = "msmpeg4"
     codec = codec or default_codec
 
+    audio_params = []
+    if audio_path is not None and not path.lower().endswith(".gif"):
+        audio_params = ["-i", audio_path]
+        if audio_codec is not None:
+            output_params += ["-acodec", audio_codec]
+        output_params += ["-map", "0:v:0", "-map", "1:a:0"]
+
     # Get command
     cmd = [_get_exe(), "-y", "-f", "rawvideo", "-vcodec", "rawvideo", "-s", sizestr]
     cmd += ["-pix_fmt", pix_fmt_in, "-r", "{:.02f}".format(fps)] + input_params
-    cmd += ["-i", "-"]
-    cmd += ["-an", "-vcodec", codec, "-pix_fmt", pix_fmt_out]
+    cmd += ["-i", "-"] + audio_params
+    cmd += ["-vcodec", codec, "-pix_fmt", pix_fmt_out]
 
     # Add fixed bitrate or variable bitrate compression flags
     if bitrate is not None:
