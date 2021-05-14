@@ -137,7 +137,9 @@ def parse_ffmpeg_header(text):
 
     if len(audiolines) > 0:
         audio_line = audiolines[0]
-        meta["audio_codec"] = audio_line.split("Audio: ", 1)[-1].lstrip().split(" ", 1)[0].strip()
+        meta["audio_codec"] = (
+            audio_line.split("Audio: ", 1)[-1].lstrip().split(" ", 1)[0].strip()
+        )
 
     # get the frame rate.
     # matches can be empty, see #171, assume nframes = inf

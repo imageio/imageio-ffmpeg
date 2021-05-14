@@ -353,7 +353,9 @@ def test_write_big_frames():
 def test_write_audio_path():
     # Provide an audio
 
-    gen = imageio_ffmpeg.write_frames(test_file2, (64, 64), audio_path=test_file3, audio_codec='aac')
+    gen = imageio_ffmpeg.write_frames(
+        test_file2, (64, 64), audio_path=test_file3, audio_codec="aac"
+    )
     gen.send(None)  # seed
     for i in range(9):
         data = bytes([min(255, 100 + i * 10)] * 64 * 64 * 3)
@@ -367,7 +369,7 @@ def test_write_audio_path():
     audio_codec = meta["audio_codec"]
 
     assert nframes == 9
-    assert audio_codec == 'aac'
+    assert audio_codec == "aac"
 
 
 if __name__ == "__main__":
@@ -387,3 +389,4 @@ if __name__ == "__main__":
     test_write_bitrate()
     test_write_macro_block_size()
     test_write_big_frames()
+    test_write_audio_path()

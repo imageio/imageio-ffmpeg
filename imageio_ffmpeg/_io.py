@@ -315,7 +315,10 @@ def write_frames(
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
         audio_path (str): A input file path for encoding with an audio stream.
+            Default None, no audio.
         audio_codec (str): The audio codec to use if audio_path is provided.
+            "copy" will try to use audio_path's audio codec without re-encoding.
+            Default None, but some formats must have certain codecs specified.
     """
 
     # ----- Input args
@@ -377,7 +380,7 @@ def write_frames(
         default_codec = "msmpeg4"
     codec = codec or default_codec
 
-    audio_params = []
+    audio_params = ["-an"]
     if audio_path is not None and not path.lower().endswith(".gif"):
         audio_params = ["-i", audio_path]
         if audio_codec is not None:
