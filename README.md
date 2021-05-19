@@ -169,6 +169,8 @@ def write_frames(
     ffmpeg_timeout=0,
     input_params=None,
     output_params=None,
+    audio_path=None,
+    audio_codec=None,
 ):
     """
     Create a generator to write frames (bytes objects) into a video file.
@@ -205,6 +207,8 @@ def write_frames(
             ffmpeg needs depends on CPU speed, compression, and frame size.
         input_params (list): Additional ffmpeg input command line parameters.
         output_params (list): Additional ffmpeg output command line parameters.
+        audio_path (str): A input file path for encoding with an audio stream.
+        audio_codec (str): The audio codec to use if audio_path is provided.
     """
 ```
 
