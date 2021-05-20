@@ -8,6 +8,8 @@ def get_platform():
     bits = struct.calcsize("P") * 8
     if sys.platform.startswith("linux"):
         return "linux{}".format(bits)
+    elif sys.platform.startswith("freebsd"):
+        return "freebsd{}".format(bits)
     elif sys.platform.startswith("win"):
         return "win{}".format(bits)
     elif sys.platform.startswith("cygwin"):
@@ -33,6 +35,7 @@ FNAME_PER_PLATFORM = {
     "win64": "ffmpeg-win64-v4.2.2.exe",
     # "linux32": "ffmpeg-linux32-v4.2.2",
     "linux64": "ffmpeg-linux64-v4.2.2",  # Kernel 3.2.0+
+    "linuxaarch64": "ffmpeg-linuxaarch64-v4.2.2",
 }
 
 osxplats = "macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64"
@@ -40,6 +43,7 @@ osxplats = "macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10
 # Wheel tag -> platform string
 WHEEL_BUILDS = {
     "py3-none-manylinux2010_x86_64": "linux64",
+    "py3-none-manylinux2014_aarch64": "linuxaarch64",
     "py3-none-" + osxplats: "osx64",
     "py3-none-win32": "win32",
     "py3-none-win_amd64": "win64",

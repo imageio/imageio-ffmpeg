@@ -349,6 +349,29 @@ def test_write_big_frames():
     assert nframes == n
 
 
+@no_warnings_allowed
+def test_write_audio_path():
+    # Provide an audio
+
+    gen = imageio_ffmpeg.write_frames(
+        test_file2, (64, 64), audio_path=test_file3, audio_codec="aac"
+    )
+    gen.send(None)  # seed
+    for i in range(9):
+        data = bytes([min(255, 100 + i * 10)] * 64 * 64 * 3)
+        gen.send(data)
+    gen.close()
+    # Check nframes
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+    # Check size
+    meta = imageio_ffmpeg.read_frames(test_file2).__next__()
+    audio_codec = meta["audio_codec"]
+
+    assert nframes == 9
+    assert audio_codec == "aac"
+
+
 if __name__ == "__main__":
     setup_module()
     test_ffmpeg_version()
@@ -366,3 +389,4 @@ if __name__ == "__main__":
     test_write_bitrate()
     test_write_macro_block_size()
     test_write_big_frames()
+    test_write_audio_path()
