@@ -18,7 +18,7 @@ class LogCatcher(threading.Thread):
         self._lines = []
         self._remainder = b""
         threading.Thread.__init__(self)
-        self.setDaemon(True)  # do not let this thread hold up Python shutdown
+        self.daemon = True  # do not let this thread hold up Python shutdown
         self._should_stop = False
         self.start()
 
