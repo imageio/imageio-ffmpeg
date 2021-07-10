@@ -150,7 +150,7 @@ def parse_ffmpeg_header(text):
         matches = re.findall(r" ([0-9]+\.?[0-9]*) (tbr|fps)", line)
         matches.sort(key=lambda x: x[1] == "tbr", reverse=True)
         if matches:
-            fps = float(matches[0][0].strip())
+            fps = float(matches[1][0].strip())
     meta["fps"] = fps
 
     # get the size of the original stream, of the form 460x320 (w x h)
