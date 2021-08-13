@@ -67,6 +67,12 @@ def _popen_kwargs(prevent_sigint=False):
             creationflags = 0x00000200
         else:
             preexec_fn = os.setpgrp  # the _pre_exec does not seem to work
+
+    falsy = ("", "0", "false", "no")
+    if os.getenv("IMAGEIO_FFMPEG_NO_PREVENT_SIGINT", "").lower() not in falsy:
+        # Unset preexec_fn to work around a strange hang on fork() (see #58)
+        preexec_fn = None
+
     return {
         "startupinfo": startupinfo,
         "creationflags": creationflags,
