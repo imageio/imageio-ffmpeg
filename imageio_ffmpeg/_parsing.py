@@ -166,7 +166,7 @@ def parse_ffmpeg_header(text):
         )
 
     # get the rotate metadata
-    reo_rotate = re.compile('rotate\s+:\s([0-9]+)')
+    reo_rotate = re.compile("rotate\s+:\s([0-9]+)")
     match = reo_rotate.search(text)
     rotate = 0
     if match is not None:
