@@ -101,6 +101,12 @@ Tidelift will coordinate the fix and disclosure.
 
 ## API
 
+The library can be configured at runtime by setting the following environment
+variables:
+* `IMAGEIO_FFMPEG_EXE=[file name]` -- override the ffmpeg executable;
+* `IMAGEIO_FFMPEG_NO_PREVENT_SIGINT=1` -- don't prevent propagation of SIGINT
+  to the ffmpeg process.
+
 ```py
 def read_frames(
     path,
