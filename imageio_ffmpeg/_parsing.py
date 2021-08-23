@@ -171,7 +171,7 @@ def parse_ffmpeg_header(text):
     rotate = 0
     if match is not None:
         rotate = match.groups()[0]
-    meta["rotate"] = rotate
+    meta["rotate"] = int(rotate)
 
     # get duration (in seconds)
     line = [l for l in lines if "Duration: " in l][0]
