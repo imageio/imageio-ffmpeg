@@ -1,7 +1,7 @@
 import sys
 import struct
 
-__version__ = "0.4.4"
+__version__ = "0.4.5"
 
 
 def get_platform():
