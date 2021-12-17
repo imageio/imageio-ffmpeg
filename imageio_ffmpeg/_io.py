@@ -260,6 +260,8 @@ def read_frames(
             else:  # stop_policy == "kill"
                 # Just kill it
                 p.kill()
+        # close stderr at the very end
+        p.stderr.close()
 
 
 def write_frames(
