@@ -261,7 +261,7 @@ def read_frames(
                 # Just kill it
                 p.kill()
         # close stderr at the very end
-        p.stderr.close()
+        #p.stderr.close()
 
 
 def write_frames(
