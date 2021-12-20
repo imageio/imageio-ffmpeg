@@ -8,7 +8,7 @@ import tempfile
 
 import imageio_ffmpeg
 
-from pytest import skip, raises
+from pytest import skip, raises, warns
 from testutils import no_warnings_allowed
 from testutils import ensure_test_files, test_dir, test_file1, test_file2, test_file3
 
@@ -29,6 +29,21 @@ def test_read_nframes():
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file1)
     assert nframes == 280
     assert 13.80 < nsecs < 13.99
+
+
+def test_read_frames_resource_warning():
+    """
+    Test issue #61: ensure no warnings are raised when the generator is closed
+
+    todo: use pytest.does_not_warn() as soon as it becomes available
+     (see https://github.com/pytest-dev/pytest/issues/9404)
+    """
+    with warns(None) as warnings:
+        gen = imageio_ffmpeg.read_frames(test_file1)
+        next(gen)
+        gen.close()
+    # there should not be any warnings, but show warning messages if there are
+    assert not [w.message for w in warnings]
 
 
 @no_warnings_allowed
@@ -376,6 +391,7 @@ if __name__ == "__main__":
     setup_module()
     test_ffmpeg_version()
     test_read_nframes()
+    test_read_frames_resource_warning()
     test_reading1()
     test_reading2()
     test_reading3()
