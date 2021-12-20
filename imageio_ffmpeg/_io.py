@@ -224,6 +224,8 @@ def read_frames(
         raise
 
     finally:
+        # Stop the LogCatcher thread, which reads from stderr.
+        log_catcher.stop_me()
 
         # Make sure that ffmpeg is terminated.
         if p.poll() is None:
@@ -243,7 +245,6 @@ def read_frames(
                 # p.stdin.write(b"q")  # commented out in v0.4.1
                 p.stdout.close()
                 p.stdin.close()
-                log_catcher.stop_me()
                 p.stderr.close()
             except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
