@@ -243,10 +243,6 @@ def read_frames(
                 # p.stdin.write(b"q")  # commented out in v0.4.1
                 p.stdout.close()
                 p.stdin.close()
-                try:
-                    p.stderr.close()
-                except Exception:
-                    pass
             except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
 
@@ -264,6 +260,8 @@ def read_frames(
             else:  # stop_policy == "kill"
                 # Just kill it
                 p.kill()
+        # close stderr at the very end
+        p.stderr.close()
 
 
 def write_frames(
