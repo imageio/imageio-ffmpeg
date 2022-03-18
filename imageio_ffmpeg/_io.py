@@ -341,7 +341,6 @@ def write_frames(
     pix_fmt_in = pix_fmt_in or "rgb24"
     pix_fmt_out = pix_fmt_out or "yuv420p"
     fps = fps or 16
-    quality = quality or 5
     # bitrate, codec, macro_block_size can all be None or ...
     macro_block_size = macro_block_size or 16
     ffmpeg_log_level = ffmpeg_log_level or "warning"
@@ -364,8 +363,9 @@ def write_frames(
     assert isinstance(pix_fmt_in, str), "pix_fmt_in must be str"
     assert isinstance(pix_fmt_out, str), "pix_fmt_out must be str"
     assert isinstance(fps, floatish), "fps must be float"
-    assert isinstance(quality, floatish), "quality must be float"
-    assert 1 <= quality <= 10, "quality must be between 1 and 10 inclusive"
+    if quality is not None:
+        assert isinstance(quality, floatish), "quality must be float"
+        assert 1 <= quality <= 10, "quality must be between 1 and 10 inclusive"
     assert isinstance(macro_block_size, int), "macro_block_size must be int"
     assert isinstance(ffmpeg_log_level, str), "ffmpeg_log_level must be str"
     assert isinstance(ffmpeg_timeout, floatish), "ffmpeg_timeout must be float"

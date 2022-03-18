@@ -254,6 +254,10 @@ def test_write_wmv():
 
 @no_warnings_allowed
 def test_write_quality():
+    try:
+        import numpy as np
+    except ImportError:
+        return skip("Missing 'numpy' test dependency")
 
     sizes = []
     for quality in [2, 5, 9]:
@@ -261,7 +265,7 @@ def test_write_quality():
         gen = imageio_ffmpeg.write_frames(test_file2, (64, 64), quality=quality)
         gen.send(None)  # seed
         for i in range(9):
-            data = bytes([min(255, 100 + i * 10)] * 64 * 64 * 3)
+            data = np.random.randint(0, 255, (64, 64, 3), dtype="uint8")
             gen.send(data)
         gen.close()
         with open(test_file2, "rb") as f:
@@ -270,7 +274,29 @@ def test_write_quality():
         nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
         assert nframes == 9
 
-    assert sizes[0] < sizes[1] < sizes[2]
+    assert sizes[0] <= sizes[1] <= sizes[2]
+
+    # Add a test compression with lossless mode with ffmpeg
+    gen = imageio_ffmpeg.write_frames(
+        test_file2,
+        (64, 64),
+        # Setting the quality to None should disable
+        # any premade settings
+        quality=None,
+        output_params=["-qp", "0"],
+    )
+    gen.send(None)  # seed
+    for i in range(9):
+        data = np.random.randint(0, 255, (64, 64, 3), dtype="uint8")
+        gen.send(data)
+    gen.close()
+    with open(test_file2, "rb") as f:
+        size_lossless = len(f.read())
+    # Check nframes
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+
+    assert sizes[2] < size_lossless
 
 
 @no_warnings_allowed
