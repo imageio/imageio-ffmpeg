@@ -117,7 +117,7 @@ def get_compiled_h264_encoders():
     return tuple(encoders)
 
 
-def get_first_available_h264_encoders():
+def get_first_available_h264_encoder():
     compiled_encoders = get_compiled_h264_encoders()
     for encoder in compiled_encoders:
         if ffmpeg_test_encoder(encoder):
@@ -495,7 +495,7 @@ def write_frames(
             # available on windows.
             codec = "msmpeg4"
         else:
-            codec = get_available_h264_encoders()[0]
+            codec = get_first_available_h264_encoder()
 
     audio_params = ["-an"]
     if audio_path is not None and not path.lower().endswith(".gif"):
