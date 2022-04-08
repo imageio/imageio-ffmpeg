@@ -15,8 +15,9 @@ h264_encoder_preference = defaultdict(lambda: -1)
 # The libx264 was the default encoder for a longe time with imageio
 h264_encoder_preference["libx264"] = 100
 
-# nvenc provides hardware encoding with NVIDIA graphics cards
-# nvenc_h264 and nvenc are the same encoder
+# Encoder with the nvidia graphics card dedicated hardware
+h264_encoder_preference["h264_nvenc"] = 90
+# Deprecated names for the same encoder
 h264_encoder_preference["nvenc_h264"] = 90
 h264_encoder_preference["nvenc"] = 90
 
@@ -107,7 +108,13 @@ def get_compiled_h264_encoders():
             encoders.append(encoder)
 
     encoders.sort(reverse=True, key=lambda x: h264_encoder_preference[x])
-    return encoders
+    if "h264_nvenc" in encoders:
+        # Remove deprecated names for the same encoder
+        for encoder in ["nvenc", "nvenc_h264"]:
+            if encoder in encoders:
+                encoders.remove(encoder)
+    # Return an immutable tuple to avoid users corrupting the lru_cache
+    return tuple(encoders)
 
 
 def get_first_available_h264_encoders():
