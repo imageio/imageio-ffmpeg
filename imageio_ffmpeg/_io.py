@@ -2,6 +2,8 @@ import sys
 import time
 import pathlib
 import subprocess
+from functools import lru_cache
+from collections import defaultdict
 
 from ._utils import get_ffmpeg_exe, _popen_kwargs, logger
 from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
@@ -9,15 +11,50 @@ from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
 
 ISWIN = sys.platform.startswith("win")
 
+h264_encoder_preference = defaultdict(lambda: -1)
+# The libx264 was the default encoder for a longe time with imageio
+h264_encoder_preference["libx264"] = 100
 
-exe = None
+# nvenc provides hardware encoding with NVIDIA graphics cards
+# nvenc_h264 and nvenc are the same encoder
+h264_encoder_preference["nvenc_h264"] = 90
+h264_encoder_preference["nvenc"] = 90
+
+# vaapi provides hardware encoding with intel integrated graphics chipsets
+h264_encoder_preference["h264_vaapi"] = 80
+
+# openh264 is cisco's open source encoder
+h264_encoder_preference["libopenh264"] = 70
+
+h264_encoder_preference["libx264rgb"] = 50
 
 
+@lru_cache()
+def get_available_h264_encoders():
+    cmd = [_get_exe(), "-loglevel", "quiet", "-encoders"]
+    p = subprocess.run(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout = p.stdout.decode().replace("\r", "")
+    header_footer = stdout.split("------")
+    footer = header_footer[1].strip("\n")
+    encoders = []
+    for line in footer.split("\n"):
+        line = line.lower()
+        if line[1] == "v" and "h.264" in line:
+            encoder = line.split(" ")[2]
+            encoders.append(encoder)
+
+    encoders.sort(reverse=True, key=lambda x: h264_encoder_preference[x])
+    return encoders
+
+
+@lru_cache()
 def _get_exe():
-    global exe
-    if exe is None:
-        exe = get_ffmpeg_exe()
-    return exe
+    return get_ffmpeg_exe()
 
 
 def count_frames_and_secs(path):
@@ -307,7 +344,8 @@ def write_frames(
         quality (float): A measure for quality between 0 and 10. Default 5.
             Ignored if bitrate is given.
         bitrate (str): The bitrate, e.g. "192k". The defaults are pretty good.
-        codec (str): The codec. Default "libx264" (or "msmpeg4" for .wmv).
+        codec (str): The codec. Default "libx264" for .mp4 (if available from
+            the ffmpeg executable) or "msmpeg4" for .wmv.
         macro_block_size (int): You probably want to align the size of frames
             to this value to avoid image resizing. Default 16. Can be set
             to 1 to avoid block alignment, though this is not recommended.
@@ -375,13 +413,14 @@ def write_frames(
     # ----- Prepare
 
     # Get parameters
-    default_codec = "libx264"
-    if path.lower().endswith(".wmv"):
-        # This is a safer default codec on windows to get videos that
-        # will play in powerpoint and other apps. H264 is not always
-        # available on windows.
-        default_codec = "msmpeg4"
-    codec = codec or default_codec
+    if not codec:
+        if path.lower().endswith(".wmv"):
+            # This is a safer default codec on windows to get videos that
+            # will play in powerpoint and other apps. H264 is not always
+            # available on windows.
+            codec = "msmpeg4"
+        else:
+            codec = get_available_h264_encoders()[0]
 
     audio_params = ["-an"]
     if audio_path is not None and not path.lower().endswith(".gif"):
