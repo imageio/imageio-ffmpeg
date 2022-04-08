@@ -31,7 +31,7 @@ h264_encoder_preference["libx264rgb"] = 50
 
 @lru_cache()
 def get_available_h264_encoders():
-    cmd = [_get_exe(), "-loglevel", "quiet", "-encoders"]
+    cmd = [_get_exe(), "-hide_banner", "-encoders"]
     p = subprocess.run(
         cmd,
         stdin=subprocess.PIPE,
@@ -39,13 +39,48 @@ def get_available_h264_encoders():
         stderr=subprocess.PIPE,
     )
     stdout = p.stdout.decode().replace("\r", "")
+    # 2022/04/08: hmaarrfk
+    # I couldn't find a good way to get the list of available encoders from
+    # the ffmpeg command
+    # The ffmpeg command return a table that looks like
+    # Notice the leading space at the very beginning
+    # On ubuntu with libffmpeg-nvenc-dev we get
+    # $ ffmpeg -hide_banner -encoders | grep -i h.264
+    #
+    # Encoders:
+    #  V..... = Video
+    #  A..... = Audio
+    #  S..... = Subtitle
+    #  .F.... = Frame-level multithreading
+    #  ..S... = Slice-level multithreading
+    #  ...X.. = Codec is experimental
+    #  ....B. = Supports draw_horiz_band
+    #  .....D = Supports direct rendering method 1
+    #  ------
+    #  V..... libx264              libx264 H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (codec h264)
+    #  V..... libx264rgb           libx264 H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 RGB (codec h264)
+    #  V....D h264_nvenc           NVIDIA NVENC H.264 encoder (codec h264)
+    #  V..... h264_omx             OpenMAX IL H.264 video encoder (codec h264)
+    #  V..... h264_qsv             H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (Intel Quick Sync Video acceleration) (codec h264)
+    #  V..... h264_v4l2m2m         V4L2 mem2mem H.264 encoder wrapper (codec h264)
+    #  V....D h264_vaapi           H.264/AVC (VAAPI) (codec h264)
+    #  V..... nvenc                NVIDIA NVENC H.264 encoder (codec h264)
+    #  V..... nvenc_h264           NVIDIA NVENC H.264 encoder (codec h264)
+    #
     header_footer = stdout.split("------")
     footer = header_footer[1].strip("\n")
     encoders = []
     for line in footer.split("\n"):
-        line = line.lower()
-        if line[1] == "v" and "h.264" in line:
-            encoder = line.split(" ")[2]
+        # Strip to remove any leading spaces
+        line = line.strip()
+        encoder = line.split(" ")[1]
+
+        if encoder in h264_encoder_preference:
+            # These encoders are known to support H.264
+            # We forcibly include them in case their description changes to
+            # not include the string "H.264"
+            encoders.append(encoder)
+        elif (line[0] == "V") and ("H.264" in line):
             encoders.append(encoder)
 
     encoders.sort(reverse=True, key=lambda x: h264_encoder_preference[x])
