@@ -29,8 +29,29 @@ h264_encoder_preference["libopenh264"] = 70
 h264_encoder_preference["libx264rgb"] = 50
 
 
+@lru_cache(maxsize=None)
+def ffmpeg_test_encoder(encoder):
+    # Use the null streams to validate if we can encode anything
+    # https://trac.ffmpeg.org/wiki/Null
+    cmd = [
+        _get_exe(), "-hide_banner",
+        "-f", "lavfi",
+        "-i", "nullsrc=s=256x256:d=8",
+        "-vcodec", encoder,
+        "-f", "null",
+        "-",
+    ]
+    p = subprocess.run(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return p.returncode == 0
+
+
 @lru_cache()
-def get_available_h264_encoders():
+def get_compiled_h264_encoders():
     cmd = [_get_exe(), "-hide_banner", "-encoders"]
     p = subprocess.run(
         cmd,
@@ -67,6 +88,8 @@ def get_available_h264_encoders():
     #  V..... nvenc                NVIDIA NVENC H.264 encoder (codec h264)
     #  V..... nvenc_h264           NVIDIA NVENC H.264 encoder (codec h264)
     #
+    # However, just because ffmpeg was compiled with the options enabled
+    # it doesn't mean that it will be successful
     header_footer = stdout.split("------")
     footer = header_footer[1].strip("\n")
     encoders = []
@@ -85,6 +108,16 @@ def get_available_h264_encoders():
 
     encoders.sort(reverse=True, key=lambda x: h264_encoder_preference[x])
     return encoders
+
+
+def get_first_available_h264_encoders():
+    compiled_encoders = get_compiled_h264_encoders()
+    for encoder in compiled_encoders:
+        if ffmpeg_test_encoder(encoder):
+            return encoder
+    else:
+        raise RuntimeError(
+            "No valid H.264 encoder was found with the ffmpeg installation")
 
 
 @lru_cache()
