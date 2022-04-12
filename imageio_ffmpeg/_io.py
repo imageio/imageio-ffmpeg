@@ -30,7 +30,6 @@ h264_encoder_preference["libopenh264"] = 70
 h264_encoder_preference["libx264rgb"] = 50
 
 
-@lru_cache(maxsize=None)
 def ffmpeg_test_encoder(encoder):
     # Use the null streams to validate if we can encode anything
     # https://trac.ffmpeg.org/wiki/Null
@@ -51,7 +50,6 @@ def ffmpeg_test_encoder(encoder):
     return p.returncode == 0
 
 
-@lru_cache()
 def get_compiled_h264_encoders():
     cmd = [_get_exe(), "-hide_banner", "-encoders"]
     p = subprocess.run(
@@ -117,6 +115,7 @@ def get_compiled_h264_encoders():
     return tuple(encoders)
 
 
+@lru_cache()
 def get_first_available_h264_encoder():
     compiled_encoders = get_compiled_h264_encoders()
     for encoder in compiled_encoders:
