@@ -34,15 +34,15 @@ def ffmpeg_test_encoder(encoder):
     # Use the null streams to validate if we can encode anything
     # https://trac.ffmpeg.org/wiki/Null
     cmd = [
-        _get_exe(), 
+        _get_exe(),
         "-hide_banner",
-        "-f", 
+        "-f",
         "lavfi",
-        "-i", 
+        "-i",
         "nullsrc=s=256x256:d=8",
-        "-vcodec", 
+        "-vcodec",
         encoder,
-        "-f", 
+        "-f",
         "null",
         "-",
     ]
@@ -128,7 +128,8 @@ def get_first_available_h264_encoder():
             return encoder
     else:
         raise RuntimeError(
-            "No valid H.264 encoder was found with the ffmpeg installation")
+            "No valid H.264 encoder was found with the ffmpeg installation"
+        )
 
 
 @lru_cache()
