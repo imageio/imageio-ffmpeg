@@ -7,6 +7,8 @@ import types
 import tempfile
 
 import imageio_ffmpeg
+from imageio_ffmpeg._io import ffmpeg_test_encoder, get_compiled_h264_encoders
+from imageio_ffmpeg._io import get_first_available_h264_encoder
 
 from pytest import skip, raises, warns
 from testutils import no_warnings_allowed
@@ -411,6 +413,30 @@ def test_write_audio_path():
 
     assert nframes == 9
     assert audio_codec == "aac"
+
+
+def test_get_compiled_h264_encoders():
+    available_encoders = get_compiled_h264_encoders()
+    # Assert it is not a mutable type
+    assert isinstance(available_encoders, tuple)
+
+    # Software encoders like libx264 should work regardless of hardware
+    for encoder in ["libx264", "libopenh264", "libx264rgb"]:
+        if encoder in available_encoders:
+            assert ffmpeg_test_encoder(encoder)
+        else:
+            assert not ffmpeg_test_encoder(encoder)
+
+    assert not ffmpeg_test_encoder("not_a_real_encoder")
+
+
+def test_prefered_encoder():
+    available_encoders = get_compiled_h264_encoders()
+    # historically, libx264 was the preferred encoder for imageio
+    # However, the user (or distribution) may not have it installed in their
+    # implementation of ffmpeg.
+    if "libx264" in available_encoders:
+        assert "libx264" == get_first_available_h264_encoder()
 
 
 if __name__ == "__main__":

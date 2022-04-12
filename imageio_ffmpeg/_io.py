@@ -2,6 +2,8 @@ import sys
 import time
 import pathlib
 import subprocess
+from functools import lru_cache
+from collections import defaultdict
 
 from ._utils import get_ffmpeg_exe, _popen_kwargs, logger
 from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
@@ -9,15 +11,130 @@ from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
 
 ISWIN = sys.platform.startswith("win")
 
+h264_encoder_preference = defaultdict(lambda: -1)
+# The libx264 was the default encoder for a longe time with imageio
+h264_encoder_preference["libx264"] = 100
 
-exe = None
+# Encoder with the nvidia graphics card dedicated hardware
+h264_encoder_preference["h264_nvenc"] = 90
+# Deprecated names for the same encoder
+h264_encoder_preference["nvenc_h264"] = 90
+h264_encoder_preference["nvenc"] = 90
+
+# vaapi provides hardware encoding with intel integrated graphics chipsets
+h264_encoder_preference["h264_vaapi"] = 80
+
+# openh264 is cisco's open source encoder
+h264_encoder_preference["libopenh264"] = 70
+
+h264_encoder_preference["libx264rgb"] = 50
 
 
+def ffmpeg_test_encoder(encoder):
+    # Use the null streams to validate if we can encode anything
+    # https://trac.ffmpeg.org/wiki/Null
+    cmd = [
+        _get_exe(),
+        "-hide_banner",
+        "-f",
+        "lavfi",
+        "-i",
+        "nullsrc=s=256x256:d=8",
+        "-vcodec",
+        encoder,
+        "-f",
+        "null",
+        "-",
+    ]
+    p = subprocess.run(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return p.returncode == 0
+
+
+def get_compiled_h264_encoders():
+    cmd = [_get_exe(), "-hide_banner", "-encoders"]
+    p = subprocess.run(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout = p.stdout.decode().replace("\r", "")
+    # 2022/04/08: hmaarrfk
+    # I couldn't find a good way to get the list of available encoders from
+    # the ffmpeg command
+    # The ffmpeg command return a table that looks like
+    # Notice the leading space at the very beginning
+    # On ubuntu with libffmpeg-nvenc-dev we get
+    # $ ffmpeg -hide_banner -encoders | grep -i h.264
+    #
+    # Encoders:
+    #  V..... = Video
+    #  A..... = Audio
+    #  S..... = Subtitle
+    #  .F.... = Frame-level multithreading
+    #  ..S... = Slice-level multithreading
+    #  ...X.. = Codec is experimental
+    #  ....B. = Supports draw_horiz_band
+    #  .....D = Supports direct rendering method 1
+    #  ------
+    #  V..... libx264              libx264 H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (codec h264)
+    #  V..... libx264rgb           libx264 H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 RGB (codec h264)
+    #  V....D h264_nvenc           NVIDIA NVENC H.264 encoder (codec h264)
+    #  V..... h264_omx             OpenMAX IL H.264 video encoder (codec h264)
+    #  V..... h264_qsv             H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (Intel Quick Sync Video acceleration) (codec h264)
+    #  V..... h264_v4l2m2m         V4L2 mem2mem H.264 encoder wrapper (codec h264)
+    #  V....D h264_vaapi           H.264/AVC (VAAPI) (codec h264)
+    #  V..... nvenc                NVIDIA NVENC H.264 encoder (codec h264)
+    #  V..... nvenc_h264           NVIDIA NVENC H.264 encoder (codec h264)
+    #
+    # However, just because ffmpeg was compiled with the options enabled
+    # it doesn't mean that it will be successful
+    header_footer = stdout.split("------")
+    footer = header_footer[1].strip("\n")
+    encoders = []
+    for line in footer.split("\n"):
+        # Strip to remove any leading spaces
+        line = line.strip()
+        encoder = line.split(" ")[1]
+
+        if encoder in h264_encoder_preference:
+            # These encoders are known to support H.264
+            # We forcibly include them in case their description changes to
+            # not include the string "H.264"
+            encoders.append(encoder)
+        elif (line[0] == "V") and ("H.264" in line):
+            encoders.append(encoder)
+
+    encoders.sort(reverse=True, key=lambda x: h264_encoder_preference[x])
+    if "h264_nvenc" in encoders:
+        # Remove deprecated names for the same encoder
+        for encoder in ["nvenc", "nvenc_h264"]:
+            if encoder in encoders:
+                encoders.remove(encoder)
+    # Return an immutable tuple to avoid users corrupting the lru_cache
+    return tuple(encoders)
+
+
+@lru_cache()
+def get_first_available_h264_encoder():
+    compiled_encoders = get_compiled_h264_encoders()
+    for encoder in compiled_encoders:
+        if ffmpeg_test_encoder(encoder):
+            return encoder
+    else:
+        raise RuntimeError(
+            "No valid H.264 encoder was found with the ffmpeg installation"
+        )
+
+
+@lru_cache()
 def _get_exe():
-    global exe
-    if exe is None:
-        exe = get_ffmpeg_exe()
-    return exe
+    return get_ffmpeg_exe()
 
 
 def count_frames_and_secs(path):
@@ -307,7 +424,8 @@ def write_frames(
         quality (float): A measure for quality between 0 and 10. Default 5.
             Ignored if bitrate is given.
         bitrate (str): The bitrate, e.g. "192k". The defaults are pretty good.
-        codec (str): The codec. Default "libx264" (or "msmpeg4" for .wmv).
+        codec (str): The codec. Default "libx264" for .mp4 (if available from
+            the ffmpeg executable) or "msmpeg4" for .wmv.
         macro_block_size (int): You probably want to align the size of frames
             to this value to avoid image resizing. Default 16. Can be set
             to 1 to avoid block alignment, though this is not recommended.
@@ -375,13 +493,14 @@ def write_frames(
     # ----- Prepare
 
     # Get parameters
-    default_codec = "libx264"
-    if path.lower().endswith(".wmv"):
-        # This is a safer default codec on windows to get videos that
-        # will play in powerpoint and other apps. H264 is not always
-        # available on windows.
-        default_codec = "msmpeg4"
-    codec = codec or default_codec
+    if not codec:
+        if path.lower().endswith(".wmv"):
+            # This is a safer default codec on windows to get videos that
+            # will play in powerpoint and other apps. H264 is not always
+            # available on windows.
+            codec = "msmpeg4"
+        else:
+            codec = get_first_available_h264_encoder()
 
     audio_params = ["-an"]
     if audio_path is not None and not path.lower().endswith(".gif"):
