@@ -34,11 +34,16 @@ def ffmpeg_test_encoder(encoder):
     # Use the null streams to validate if we can encode anything
     # https://trac.ffmpeg.org/wiki/Null
     cmd = [
-        _get_exe(), "-hide_banner",
-        "-f", "lavfi",
-        "-i", "nullsrc=s=256x256:d=8",
-        "-vcodec", encoder,
-        "-f", "null",
+        _get_exe(), 
+        "-hide_banner",
+        "-f", 
+        "lavfi",
+        "-i", 
+        "nullsrc=s=256x256:d=8",
+        "-vcodec", 
+        encoder,
+        "-f", 
+        "null",
         "-",
     ]
     p = subprocess.run(
