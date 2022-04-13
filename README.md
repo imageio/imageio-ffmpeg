@@ -22,7 +22,7 @@ and adds support for e.g. cameras and seeking.
 
 ## Installation
 
-This library works with any version of Python 3.4+ (including Pypy).
+This library works with any version of Python 3.5+ (including Pypy).
 There are no further dependencies. The wheels on Pypi include the ffmpeg
 executable for all common platforms (Windows 7+, Linux kernel 2.6.32+,
 OSX 10.9+). Install using:
