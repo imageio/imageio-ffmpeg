@@ -206,7 +206,8 @@ def write_frames(
         quality (float): A measure for quality between 0 and 10. Default 5.
             Ignored if bitrate is given.
         bitrate (str): The bitrate, e.g. "192k". The defaults are pretty good.
-        codec (str): The codec. Default "libx264" (or "msmpeg4" for .wmv).
+        codec (str): The codec. Default "libx264" for .mp4 (if available from
+            the ffmpeg executable) or "msmpeg4" for .wmv.
         macro_block_size (int): You probably want to align the size of frames
             to this value to avoid image resizing. Default 16. Can be set
             to 1 to avoid block alignment, though this is not recommended.
