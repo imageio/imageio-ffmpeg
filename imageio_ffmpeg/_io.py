@@ -362,7 +362,7 @@ def read_frames(
                 # p.stdin.write(b"q")  # commented out in v0.4.1
                 p.stdout.close()
                 p.stdin.close()
-                p.stderr.close()
+                # p.stderr.close() -> not here, the log_catcher closes it
             except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
 

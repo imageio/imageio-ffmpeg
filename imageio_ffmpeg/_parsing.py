@@ -76,6 +76,13 @@ class LogCatcher(threading.Thread):
             elif self._lines:
                 self._lines = limit_lines_local(self._lines)
 
+        # Close the file when we're done
+        # See #61 and #69
+        try:
+            self._file.close()
+        except Exception:
+            pass
+
 
 def get_output_video_line(lines):
     """Get the line that defines the video stream that ffmpeg outputs,

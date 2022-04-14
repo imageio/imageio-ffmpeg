@@ -5,6 +5,8 @@ quits nicely (instead of being killed).
 """
 
 import gc
+import sys
+import subprocess
 
 import imageio_ffmpeg
 
@@ -116,6 +118,23 @@ def test_write_del():
         assert len(pids3) == 0
 
 
+def test_partial_read():
+    # Case: https://github.com/imageio/imageio-ffmpeg/issues/69
+    template = "import sys; import imageio_ffmpeg; f=sys.argv[1]; print(f); r=imageio_ffmpeg.read_frames(f);"
+    for i in range(4):
+        code = template + " r.__next__();" * i
+        cmd = [sys.executable, "-c", code, test_file1]
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            timeout=5,
+        )
+        print(result.stdout)
+        assert not result.returncode
+
+
 if __name__ == "__main__":
     setup_module()
     test_ffmpeg_version()
@@ -124,3 +143,4 @@ if __name__ == "__main__":
     test_reader_del()
     test_write_close()
     test_write_del()
+    test_partial_read()
