@@ -120,7 +120,7 @@ def test_write_del():
 
 def test_partial_read():
     # Case: https://github.com/imageio/imageio-ffmpeg/issues/69
-    template = "import imageio_ffmpeg; r = imageio_ffmpeg.read_frames('{}');"
+    template = 'import imageio_ffmpeg; r = imageio_ffmpeg.read_frames("{}");'
     for i in range(4):
         code = template.format(test_file1) + " r.__next__();" * i
         cmd = [sys.executable, "-c", code]
