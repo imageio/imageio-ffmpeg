@@ -34,7 +34,7 @@ def ffmpeg_test_encoder(encoder):
     # Use the null streams to validate if we can encode anything
     # https://trac.ffmpeg.org/wiki/Null
     cmd = [
-        _get_exe(),
+        get_ffmpeg_exe(),
         "-hide_banner",
         "-f",
         "lavfi",
@@ -56,7 +56,7 @@ def ffmpeg_test_encoder(encoder):
 
 
 def get_compiled_h264_encoders():
-    cmd = [_get_exe(), "-hide_banner", "-encoders"]
+    cmd = [get_ffmpeg_exe(), "-hide_banner", "-encoders"]
     p = subprocess.run(
         cmd,
         stdin=subprocess.PIPE,
@@ -132,11 +132,6 @@ def get_first_available_h264_encoder():
         )
 
 
-@lru_cache()
-def _get_exe():
-    return get_ffmpeg_exe()
-
-
 def count_frames_and_secs(path):
     """
     Get the number of frames and number of seconds for the given video
@@ -153,7 +148,18 @@ def count_frames_and_secs(path):
     if not isinstance(path, str):
         raise TypeError("Video path must be a string or pathlib.Path.")
 
-    cmd = [_get_exe(), "-i", path, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
+    cmd = [
+        get_ffmpeg_exe(),
+        "-i",
+        path,
+        "-map",
+        "0:v:0",
+        "-c",
+        "copy",
+        "-f",
+        "null",
+        "-",
+    ]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, **_popen_kwargs())
     except subprocess.CalledProcessError as err:
@@ -254,7 +260,7 @@ def read_frames(
 
     pre_output_params = ["-pix_fmt", pix_fmt, "-vcodec", "rawvideo", "-f", "image2pipe"]
 
-    cmd = [_get_exe()]
+    cmd = [get_ffmpeg_exe()]
     cmd += input_params + ["-i", path]
     cmd += pre_output_params + output_params + ["-"]
 
@@ -510,7 +516,16 @@ def write_frames(
         output_params += ["-map", "0:v:0", "-map", "1:a:0"]
 
     # Get command
-    cmd = [_get_exe(), "-y", "-f", "rawvideo", "-vcodec", "rawvideo", "-s", sizestr]
+    cmd = [
+        get_ffmpeg_exe(),
+        "-y",
+        "-f",
+        "rawvideo",
+        "-vcodec",
+        "rawvideo",
+        "-s",
+        sizestr,
+    ]
     cmd += ["-pix_fmt", pix_fmt_in, "-r", "{:.02f}".format(fps)] + input_params
     cmd += ["-i", "-"] + audio_params
     cmd += ["-vcodec", codec, "-pix_fmt", pix_fmt_out]
