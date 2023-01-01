@@ -135,7 +135,16 @@ def parse_ffmpeg_header(text):
     # Codec and pix_fmt hint
     line = videolines[0]
     meta["codec"] = line.split("Video: ", 1)[-1].lstrip().split(" ", 1)[0].strip()
-    meta["pix_fmt"] = line.split("Video: ", 1)[-1].split(",")[1].strip()
+    meta["pix_fmt"] = re.split(
+        # use a negative lookahead regexp to ignore commas that are contained
+        # within a parenthesis
+        # this helps consider a pix_fmt of the kind
+        #     yuv420p(tv, progressive)
+        # as what it is, instead of erroneously reporting as
+        #     yuv420p(tv
+        r",\s*(?![^()]*\))",
+        line.split("Video: ", 1)[-1],
+    )[1].strip()
 
     # get the output line that speaks about audio
     audiolines = [
