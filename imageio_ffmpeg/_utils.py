@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import subprocess
+from functools import lru_cache
 from pkg_resources import resource_filename
 
 from ._definitions import get_platform, FNAME_PER_PLATFORM
@@ -23,6 +24,20 @@ def get_ffmpeg_exe():
     if exe:
         return exe
 
+    # Auto-detect
+    exe = _get_ffmpeg_exe()
+    if exe:
+        return exe
+
+    # Nothing was found
+    raise RuntimeError(
+        "No ffmpeg exe could be found. Install ffmpeg on your system, "
+        "or set the IMAGEIO_FFMPEG_EXE environment variable."
+    )
+
+
+@lru_cache()
+def _get_ffmpeg_exe():
     plat = get_platform()
 
     # 2. Try from here
@@ -45,11 +60,7 @@ def get_ffmpeg_exe():
     if _is_valid_exe(exe):
         return exe
 
-    # Nothing was found
-    raise RuntimeError(
-        "No ffmpeg exe could be found. Install ffmpeg on your system, "
-        "or set the IMAGEIO_FFMPEG_EXE environment variable."
-    )
+    return None
 
 
 def _popen_kwargs(prevent_sigint=False):
