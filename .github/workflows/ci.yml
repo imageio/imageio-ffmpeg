@@ -15,11 +15,11 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: '3.10'
       - name: Install dependencies
         run: |
             python -m pip install --upgrade pip
@@ -36,12 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux py35
-            os: ubuntu-20.04
-            pyversion: '3.5'
-          - name: Linux py36
-            os: ubuntu-latest
-            pyversion: '3.6'
+          # Py versions
           - name: Linux py37
             os: ubuntu-latest
             pyversion: '3.7'
@@ -54,9 +49,13 @@ jobs:
           - name: Linux py310
             os: ubuntu-latest
             pyversion: '3.10'
-          - name: Linux pypy3
+          #- name: Linux py311 -> need new version of invoke that support 311
+          #  os: ubuntu-latest
+          #  pyversion: '3.11'
+          # OS's
+          - name: Linux pypy
             os: ubuntu-latest
-            pyversion: 'pypy3'
+            pyversion: 'pypy3.9'
           - name: Windows py39
             os: windows-latest
             pyversion: '3.9'
@@ -64,9 +63,9 @@ jobs:
             os: macos-latest
             pyversion: '3.9'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.pyversion }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.pyversion }}
       - name: Install dependencies
