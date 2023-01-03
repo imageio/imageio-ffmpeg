@@ -163,9 +163,51 @@ def test_get_correct_rotation():
     assert info["rotate"] == 270
 
 
+def test_comma_in_pixel_format():
+    sample = dedent(
+        r"""
+        ffmpeg version 5.1.2 Copyright (c) 2000-2022 the FFmpeg developers
+          built with gcc 11.3.0 (conda-forge gcc 11.3.0-19)
+          configuration: --prefix=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac --cc=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-cc --cxx=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-c++ --nm=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-nm --ar=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-ar --disable-doc --disable-openssl --enable-demuxer=dash --enable-hardcoded-tables --enable-libfreetype --enable-libfontconfig --enable-libopenh264 --enable-gnutls --enable-libmp3lame --enable-libvpx --enable-pthreads --enable-vaapi --disable-gpl --enable-libaom --enable-libsvtav1 --enable-libxml2 --enable-pic --enable-shared --disable-static --enable-version3 --enable-zlib --pkg-config=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/pkg-config
+          libavutil      57. 28.100 / 57. 28.100
+          libavcodec     59. 37.100 / 59. 37.100
+          libavformat    59. 27.100 / 59. 27.100
+          libavdevice    59.  7.100 / 59.  7.100
+          libavfilter     8. 44.100 /  8. 44.100
+          libswscale      6.  7.100 /  6.  7.100
+          libswresample   4.  7.100 /  4.  7.100
+        Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/pytest-of-mark/pytest-39/test_writer_pixelformat_size_v0/test.mp4':
+          Metadata:
+            major_brand     : isom
+            minor_version   : 512
+            compatible_brands: isomiso2avc1mp41
+            encoder         : Lavf59.27.100
+          Duration: 00:00:00.40, start: 0.000000, bitrate: 18 kb/s
+          Stream #0:0[0x1](und): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(tv, progressive), 64x64, 1 kb/s, 10 fps, 10 tbr, 10240 tbn (default)
+            Metadata:
+              handler_name    : VideoHandler
+              vendor_id       : [0][0][0][0]
+              encoder         : Lavc59.37.100 libopenh264
+        Stream mapping:
+          Stream #0:0 -> #0:0 (h264 (native) -> rawvideo (native))
+        Press [q] to stop, [?] for help
+        Output #0, image2pipe, to 'pipe:':
+          Metadata:
+            major_brand     : isom
+            minor_version   : 512
+            compatible_brands: isomiso2avc1mp41
+            encoder         : Lavf59.27.100
+          Stream #0:0(und): Video: rawvideo (RGB[24] / 0x18424752), rgb24(pc, gbr/unknown/unknown, progressive), 64x64, q=2-31, 983 kb/s, 10 fps, 10 tbn (default)
+    """
+    )
+    info = parse_ffmpeg_header(sample)
+    assert info["pix_fmt"] == "yuv420p(tv, progressive)"
+
+
 if __name__ == "__main__":
     test_cvsecs()
     test_limit_lines()
     test_get_correct_fps1()
     test_get_correct_fps2()
     test_get_correct_rotation()
+    test_comma_in_pixel_format()
