@@ -49,9 +49,9 @@ jobs:
           - name: Linux py310
             os: ubuntu-latest
             pyversion: '3.10'
-          - name: Linux py311
-            os: ubuntu-latest
-            pyversion: '3.11'
+          #- name: Linux py311 -> need new version of invoke that support 311
+          #  os: ubuntu-latest
+          #  pyversion: '3.11'
           # OS's
           - name: Linux pypy
             os: ubuntu-latest
