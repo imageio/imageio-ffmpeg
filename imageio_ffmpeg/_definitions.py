@@ -7,6 +7,10 @@ __version__ = "0.4.8"
 def get_platform():
     bits = struct.calcsize("P") * 8
     if sys.platform.startswith("linux"):
+        import platform
+        architecture = platform.machine()
+        if architecture == "aarch64":
+            return "linuxaarch64"
         return "linux{}".format(bits)
     elif sys.platform.startswith("freebsd"):
         return "freebsd{}".format(bits)
