@@ -282,7 +282,6 @@ def read_frames(
     # Generators are automatically closed when they get deleted,
     # so the finally block is guaranteed to run.
     try:
-
         # ----- Load meta data
 
         # Wait for the log catcher to get the meta information
@@ -352,7 +351,6 @@ def read_frames(
 
         # Make sure that ffmpeg is terminated.
         if p.poll() is None:
-
             # Ask ffmpeg to quit
             try:
                 # I read somewhere that modern ffmpeg on Linux prefers a
@@ -610,12 +608,10 @@ def write_frames(
     # Generators are automatically closed when they get deleted,
     # so the finally block is guaranteed to run.
     try:
-
         # Just keep going until the generator.close() is called (raises GeneratorExit).
         # This could also happen when the generator is deleted somehow.
         nframes = 0
         while True:
-
             # Get frame
             bb = yield
 
@@ -654,10 +650,8 @@ def write_frames(
         raise
 
     finally:
-
         # Make sure that ffmpeg is terminated.
         if p.poll() is None:
-
             # Tell ffmpeg that we're done
             try:
                 p.stdin.close()
