@@ -49,7 +49,6 @@ class LogCatcher(threading.Thread):
         return self._header + "\n" + lines.decode("utf-8", "ignore")
 
     def run(self):
-
         # Create ref here so it still exists even if Py is shutting down
         limit_lines_local = limit_lines
 

@@ -30,7 +30,6 @@ def test_ffmpeg_version():
 
 @no_warnings_allowed
 def test_reader_done():
-
     for i in range(N):
         pids0 = get_ffmpeg_pids()
         r = imageio_ffmpeg.read_frames(test_file1)
@@ -48,7 +47,6 @@ def test_reader_done():
 
 @no_warnings_allowed
 def test_reader_close():
-
     for i in range(N):
         pids0 = get_ffmpeg_pids()
         r = imageio_ffmpeg.read_frames(test_file1)
@@ -65,7 +63,6 @@ def test_reader_close():
 
 @no_warnings_allowed
 def test_reader_del():
-
     for i in range(N):
         pids0 = get_ffmpeg_pids()
         r = imageio_ffmpeg.read_frames(test_file1)
@@ -83,7 +80,6 @@ def test_reader_del():
 
 @no_warnings_allowed
 def test_write_close():
-
     for i in range(N):
         pids0 = get_ffmpeg_pids()
         w = imageio_ffmpeg.write_frames(test_file2, (64, 64))
@@ -101,7 +97,6 @@ def test_write_close():
 
 @no_warnings_allowed
 def test_write_del():
-
     for i in range(N):
         pids0 = get_ffmpeg_pids()
         w = imageio_ffmpeg.write_frames(test_file2, (64, 64))

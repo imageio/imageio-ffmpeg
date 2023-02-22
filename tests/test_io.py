@@ -50,7 +50,6 @@ def test_read_frames_resource_warning():
 
 @no_warnings_allowed
 def test_reading1():
-
     # Calling returns a generator
     gen = imageio_ffmpeg.read_frames(test_file1)
     assert isinstance(gen, types.GeneratorType)
@@ -168,9 +167,7 @@ def test_reading_invalid_video():
 
 @no_warnings_allowed
 def test_write1():
-
     for n in (1, 9, 14, 279, 280, 281):
-
         # Prepare for writing
         gen = imageio_ffmpeg.write_frames(test_file2, (64, 64))
         assert isinstance(gen, types.GeneratorType)
@@ -197,7 +194,6 @@ def test_write1():
 
 @no_warnings_allowed
 def test_write_pix_fmt_in():
-
     sizes = []
     for pixfmt, bpp in [("gray", 1), ("rgb24", 3), ("rgba", 4)]:
         # Prepare for writing
@@ -218,7 +214,6 @@ def test_write_pix_fmt_in():
 
 @no_warnings_allowed
 def test_write_pix_fmt_out():
-
     sizes = []
     for pixfmt in ["gray", "yuv420p"]:
         # Prepare for writing
@@ -303,7 +298,6 @@ def test_write_quality():
 
 @no_warnings_allowed
 def test_write_bitrate():
-
     # Mind that we send uniform images, so the difference is marginal
 
     sizes = []
@@ -326,7 +320,6 @@ def test_write_bitrate():
 
 # @no_warnings_allowed --> will generate warnings abiut macro block size
 def test_write_macro_block_size():
-
     frame_sizes = []
     for mbz in [None, 10]:  # None is default == 16
         # Prepare for writing
