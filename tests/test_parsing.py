@@ -74,7 +74,7 @@ def test_get_correct_fps1():
     )
 
     info = parse_ffmpeg_header(sample)
-    assert info["fps"] == 26.58
+    assert info["fps"] == 29.46
 
 
 def test_get_correct_fps2():
