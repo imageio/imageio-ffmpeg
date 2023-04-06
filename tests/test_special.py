@@ -5,9 +5,9 @@ import gc
 import queue
 import threading
 
-import imageio_ffmpeg
-
 from testutils import ensure_test_files, test_file1
+
+import imageio_ffmpeg
 
 
 def setup_module():

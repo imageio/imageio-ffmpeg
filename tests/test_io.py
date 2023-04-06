@@ -8,21 +8,13 @@ import types
 import warnings
 
 from pytest import raises, skip, warns
-from testutils import (
-    ensure_test_files,
-    no_warnings_allowed,
-    test_dir,
-    test_file1,
-    test_file2,
-    test_file3,
-)
+from testutils import (ensure_test_files, no_warnings_allowed, test_dir,
+                       test_file1, test_file2, test_file3)
 
 import imageio_ffmpeg
-from imageio_ffmpeg._io import (
-    ffmpeg_test_encoder,
-    get_compiled_h264_encoders,
-    get_first_available_h264_encoder,
-)
+from imageio_ffmpeg._io import (ffmpeg_test_encoder,
+                                get_compiled_h264_encoders,
+                                get_first_available_h264_encoder)
 
 
 def setup_module():

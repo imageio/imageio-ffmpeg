@@ -1,6 +1,6 @@
 import re
-import time
 import threading
+import time
 
 from ._utils import logger
 

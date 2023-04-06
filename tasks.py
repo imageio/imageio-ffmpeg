@@ -1,11 +1,11 @@
 """ Invoke tasks for imageio-ffmpeg
 """
 
-import os
-import sys
-import shutil
 import importlib
+import os
+import shutil
 import subprocess
+import sys
 from urllib.request import urlopen
 
 from invoke import task
@@ -138,7 +138,7 @@ def build(ctx):
     # Get version and more
     sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
     try:
-        from _definitions import __version__, FNAME_PER_PLATFORM, WHEEL_BUILDS
+        from _definitions import FNAME_PER_PLATFORM, WHEEL_BUILDS, __version__
     finally:
         sys.path.pop(0)
 
@@ -236,6 +236,7 @@ def update_readme(ctx):
     text = text.split("\n## API\n")[0] + "\n## API\n\n"
 
     import inspect
+
     import imageio_ffmpeg
 
     for func in (

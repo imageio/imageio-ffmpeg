@@ -8,13 +8,8 @@ import gc
 import subprocess
 import sys
 
-from testutils import (
-    ensure_test_files,
-    get_ffmpeg_pids,
-    no_warnings_allowed,
-    test_file1,
-    test_file2,
-)
+from testutils import (ensure_test_files, get_ffmpeg_pids, no_warnings_allowed,
+                       test_file1, test_file2)
 
 import imageio_ffmpeg
 

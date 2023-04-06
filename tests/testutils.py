@@ -1,12 +1,11 @@
+import logging.handlers
 import os
 import tempfile
-import logging.handlers
 from urllib.request import urlopen
 
 import psutil
 
 import imageio_ffmpeg
-
 
 test_dir = tempfile.gettempdir()
 test_url1 = "https://raw.githubusercontent.com/imageio/imageio-binaries/master/images/cockatoo.mp4"
