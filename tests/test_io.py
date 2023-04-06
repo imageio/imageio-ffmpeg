@@ -2,17 +2,27 @@
 The main tests for the public API.
 """
 
+import tempfile
 import time
 import types
-import tempfile
+import warnings
+
+from pytest import raises, skip, warns
+from testutils import (
+    ensure_test_files,
+    no_warnings_allowed,
+    test_dir,
+    test_file1,
+    test_file2,
+    test_file3,
+)
 
 import imageio_ffmpeg
-from imageio_ffmpeg._io import ffmpeg_test_encoder, get_compiled_h264_encoders
-from imageio_ffmpeg._io import get_first_available_h264_encoder
-
-from pytest import skip, raises, warns
-from testutils import no_warnings_allowed
-from testutils import ensure_test_files, test_dir, test_file1, test_file2, test_file3
+from imageio_ffmpeg._io import (
+    ffmpeg_test_encoder,
+    get_compiled_h264_encoders,
+    get_first_available_h264_encoder,
+)
 
 
 def setup_module():
@@ -40,12 +50,13 @@ def test_read_frames_resource_warning():
     todo: use pytest.does_not_warn() as soon as it becomes available
      (see https://github.com/pytest-dev/pytest/issues/9404)
     """
-    with warns(None) as warnings:
+
+    with warnings.catch_warnings(record=True) as warnings_:
         gen = imageio_ffmpeg.read_frames(test_file1)
         next(gen)
         gen.close()
     # there should not be any warnings, but show warning messages if there are
-    assert not [w.message for w in warnings]
+    assert not [w.message for w in warnings_]
 
 
 @no_warnings_allowed
