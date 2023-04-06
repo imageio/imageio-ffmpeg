@@ -163,7 +163,9 @@ def count_frames_and_secs(path):
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, **_popen_kwargs())
     except subprocess.CalledProcessError as err:
         out = err.output.decode(errors="ignore")
-        raise RuntimeError("FFMEG call failed with {}:\n{}".format(err.returncode, out))
+        raise RuntimeError(
+            "FFMPEG call failed with {}:\n{}".format(err.returncode, out)
+        )
 
     # Note that other than with the subprocess calls below, ffmpeg wont hang here.
     # Worst case Python will stop/crash and ffmpeg will continue running until done.
