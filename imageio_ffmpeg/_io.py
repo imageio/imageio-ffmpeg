@@ -1,13 +1,12 @@
-import sys
-import time
 import pathlib
 import subprocess
-from functools import lru_cache
+import sys
+import time
 from collections import defaultdict
+from functools import lru_cache
 
-from ._utils import get_ffmpeg_exe, _popen_kwargs, logger
-from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
-
+from ._parsing import LogCatcher, cvsecs, parse_ffmpeg_header
+from ._utils import _popen_kwargs, get_ffmpeg_exe, logger
 
 ISWIN = sys.platform.startswith("win")
 
