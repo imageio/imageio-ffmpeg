@@ -317,7 +317,7 @@ def read_frames(
             try:
                 bb = bytes()
                 while len(bb) < framesize_bytes:
-                    extra_bytes = p.stdout.read(framesize_bytes - len(bb))
+                    extra_bytes = process.stdout.read(framesize_bytes - len(bb))
                     if not extra_bytes:
                         if len(bb) == 0:
                             return
