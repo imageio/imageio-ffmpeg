@@ -7,7 +7,7 @@ import time
 import types
 import warnings
 
-from pytest import raises, skip, warns
+from pytest import raises, skip
 from testutils import (
     ensure_test_files,
     no_warnings_allowed,
