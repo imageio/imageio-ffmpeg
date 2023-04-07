@@ -107,6 +107,21 @@ variables:
 * `IMAGEIO_FFMPEG_NO_PREVENT_SIGINT=1` -- don't prevent propagation of SIGINT
   to the ffmpeg process.
 
+## Developers
+
+Dev deps:
+```
+pip install invoke black flake8
+```
+
+We use invoke:
+
+```
+invoke autoformat
+invoke lint
+invoke -l  # to get a list of all tasks
+invoke update-readme  # after changes to the docstrings
+```
 
 ## API
 
