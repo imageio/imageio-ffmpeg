@@ -5,14 +5,18 @@ quits nicely (instead of being killed).
 """
 
 import gc
-import sys
 import subprocess
+import sys
+
+from testutils import (
+    ensure_test_files,
+    get_ffmpeg_pids,
+    no_warnings_allowed,
+    test_file1,
+    test_file2,
+)
 
 import imageio_ffmpeg
-
-from testutils import no_warnings_allowed, get_ffmpeg_pids
-from testutils import ensure_test_files, test_file1, test_file2
-
 
 N = 2  # number of times to perform each test
 
@@ -30,7 +34,8 @@ def test_ffmpeg_version():
 
 @no_warnings_allowed
 def test_reader_done():
-    for i in range(N):
+    """Test that the reader is done after reading all frames"""
+    for _ in range(N):
         pids0 = get_ffmpeg_pids()
         r = imageio_ffmpeg.read_frames(test_file1)
         pids1 = get_ffmpeg_pids().difference(pids0)  # generator has not started
@@ -47,7 +52,8 @@ def test_reader_done():
 
 @no_warnings_allowed
 def test_reader_close():
-    for i in range(N):
+    """Test that the reader is done after closing it"""
+    for _ in range(N):
         pids0 = get_ffmpeg_pids()
         r = imageio_ffmpeg.read_frames(test_file1)
         pids1 = get_ffmpeg_pids().difference(pids0)  # generator has not started
@@ -63,7 +69,8 @@ def test_reader_close():
 
 @no_warnings_allowed
 def test_reader_del():
-    for i in range(N):
+    """Test that the reader is done after deleting it"""
+    for _ in range(N):
         pids0 = get_ffmpeg_pids()
         r = imageio_ffmpeg.read_frames(test_file1)
         pids1 = get_ffmpeg_pids().difference(pids0)  # generator has not started
@@ -80,7 +87,8 @@ def test_reader_del():
 
 @no_warnings_allowed
 def test_write_close():
-    for i in range(N):
+    """Test that the writer is done after closing it"""
+    for _ in range(N):
         pids0 = get_ffmpeg_pids()
         w = imageio_ffmpeg.write_frames(test_file2, (64, 64))
         pids1 = get_ffmpeg_pids().difference(pids0)  # generator has not started
@@ -97,7 +105,7 @@ def test_write_close():
 
 @no_warnings_allowed
 def test_write_del():
-    for i in range(N):
+    for _ in range(N):
         pids0 = get_ffmpeg_pids()
         w = imageio_ffmpeg.write_frames(test_file2, (64, 64))
         pids1 = get_ffmpeg_pids().difference(pids0)  # generator has not started
@@ -115,7 +123,10 @@ def test_write_del():
 
 def test_partial_read():
     # Case: https://github.com/imageio/imageio-ffmpeg/issues/69
-    template = "import sys; import imageio_ffmpeg; f=sys.argv[1]; print(f); r=imageio_ffmpeg.read_frames(f);"
+    template = (
+        "import sys; import imageio_ffmpeg; f=sys.argv[1]; print(f); "
+        "r=imageio_ffmpeg.read_frames(f);"
+    )
     for i in range(4):
         code = template + " r.__next__();" * i
         cmd = [sys.executable, "-c", code, test_file1]

@@ -1,13 +1,12 @@
-import sys
-import time
 import pathlib
 import subprocess
-from functools import lru_cache
+import sys
+import time
 from collections import defaultdict
+from functools import lru_cache
 
-from ._utils import get_ffmpeg_exe, _popen_kwargs, logger
-from ._parsing import LogCatcher, parse_ffmpeg_header, cvsecs
-
+from ._parsing import LogCatcher, cvsecs, parse_ffmpeg_header
+from ._utils import _popen_kwargs, get_ffmpeg_exe, logger
 
 ISWIN = sys.platform.startswith("win")
 
@@ -164,7 +163,9 @@ def count_frames_and_secs(path):
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, **_popen_kwargs())
     except subprocess.CalledProcessError as err:
         out = err.output.decode(errors="ignore")
-        raise RuntimeError("FFMEG call failed with {}:\n{}".format(err.returncode, out))
+        raise RuntimeError(
+            "FFMPEG call failed with {}:\n{}".format(err.returncode, out)
+        )
 
     # Note that other than with the subprocess calls below, ffmpeg wont hang here.
     # Worst case Python will stop/crash and ffmpeg will continue running until done.
@@ -264,7 +265,7 @@ def read_frames(
     cmd += input_params + ["-i", path]
     cmd += pre_output_params + output_params + ["-"]
 
-    p = subprocess.Popen(
+    process = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
@@ -272,7 +273,7 @@ def read_frames(
         **_popen_kwargs(prevent_sigint=True)
     )
 
-    log_catcher = LogCatcher(p.stderr)
+    log_catcher = LogCatcher(process.stderr)
 
     # Init policy by which to terminate ffmpeg. May be set to "kill" later.
     stop_policy = "timeout"  # not wait; ffmpeg should be able to quit quickly
@@ -302,8 +303,8 @@ def read_frames(
 
         # ----- Read frames
 
-        w, h = meta["size"]
-        framesize_bits = w * h * bits_per_pixel
+        width, height = meta["size"]
+        framesize_bits = width * height * bits_per_pixel
         framesize_bytes = framesize_bits / 8
         assert (
             framesize_bytes.is_integer()
@@ -316,7 +317,7 @@ def read_frames(
             try:
                 bb = bytes()
                 while len(bb) < framesize_bytes:
-                    extra_bytes = p.stdout.read(framesize_bytes - len(bb))
+                    extra_bytes = process.stdout.read(framesize_bytes - len(bb))
                     if not extra_bytes:
                         if len(bb) == 0:
                             return
@@ -350,7 +351,7 @@ def read_frames(
         log_catcher.stop_me()
 
         # Make sure that ffmpeg is terminated.
-        if p.poll() is None:
+        if process.poll() is None:
             # Ask ffmpeg to quit
             try:
                 # I read somewhere that modern ffmpeg on Linux prefers a
@@ -364,8 +365,8 @@ def read_frames(
                 # Found that writing to stdin can cause "Invalid argument" on
                 # Windows # and "Broken Pipe" on Unix.
                 # p.stdin.write(b"q")  # commented out in v0.4.1
-                p.stdout.close()
-                p.stdin.close()
+                process.stdout.close()
+                process.stdin.close()
                 # p.stderr.close() -> not here, the log_catcher closes it
             except Exception as err:  # pragma: no cover
                 logger.warning("Error while attempting stop ffmpeg (r): " + str(err))
@@ -374,16 +375,16 @@ def read_frames(
                 # Wait until timeout, produce a warning and kill if it still exists
                 try:
                     etime = time.time() + 1.5
-                    while time.time() < etime and p.poll() is None:
+                    while time.time() < etime and process.poll() is None:
                         time.sleep(0.01)
                 finally:
-                    if p.poll() is None:  # pragma: no cover
+                    if process.poll() is None:  # pragma: no cover
                         logger.warning("We had to kill ffmpeg to stop it.")
-                        p.kill()
+                        process.kill()
 
             else:  # stop_policy == "kill"
                 # Just kill it
-                p.kill()
+                process.kill()
 
 
 def write_frames(

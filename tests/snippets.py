@@ -11,7 +11,9 @@ use-cases. Some may depend on imageio.
 # is now to wait for ffmpeg.
 
 import os
+
 import numpy as np
+
 import imageio_ffmpeg
 
 ims = [
@@ -30,6 +32,7 @@ w.close()
 # %% Behavior of KeyboardInterrupt / Ctrl+C
 
 import os
+
 import imageio_ffmpeg
 
 filename = os.path.expanduser("~/.imageio/images/cockatoo.mp4")

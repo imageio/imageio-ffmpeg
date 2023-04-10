@@ -1,11 +1,12 @@
-import os
-import sys
 import logging
+import os
 import subprocess
+import sys
 from functools import lru_cache
+
 from pkg_resources import resource_filename
 
-from ._definitions import get_platform, FNAME_PER_PLATFORM
+from ._definitions import FNAME_PER_PLATFORM, get_platform
 
 logger = logging.getLogger("imageio_ffmpeg")
 

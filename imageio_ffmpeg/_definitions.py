@@ -1,6 +1,6 @@
 import platform
-import sys
 import struct
+import sys
 
 __version__ = "0.4.8"
 
