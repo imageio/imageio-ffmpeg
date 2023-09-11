@@ -52,6 +52,9 @@ jobs:
           - name: Linux py311
             os: ubuntu-latest
             pyversion: '3.11'
+          - name: Linux py312
+            os: ubuntu-latest
+            pyversion: '3.12'
           # OS's
           - name: Linux pypy
             os: ubuntu-latest
