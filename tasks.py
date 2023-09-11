@@ -262,7 +262,7 @@ def black_wrapper(writeback):
     """Helper function to invoke black programatically."""
 
     check = [] if writeback else ["--check"]
-    exclude = "|".join(["cangivefilenameshere"])
+    exclude = "|".join([".git"])
     sys.argv[1:] = check + ["--exclude", exclude, ROOT_DIR]
 
     import black
