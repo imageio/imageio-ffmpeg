@@ -38,7 +38,7 @@ def test_threading():
     for i in range(num_threads * num_frames):
         print(i, end=" ")
         gc.collect()  # this seems to help invoke the segfault earlier
-        q.get()
+        q.get(timeout=20)
 
 
 if __name__ == "__main__":
