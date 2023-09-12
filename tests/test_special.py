@@ -2,12 +2,17 @@
 """
 
 import gc
+import sys
 import queue
 import threading
 
 from testutils import ensure_test_files, test_file1
+import pytest
 
 import imageio_ffmpeg
+
+
+IS_PYPY = "__pypy__" in sys.builtin_module_names
 
 
 def setup_module():
@@ -23,6 +28,9 @@ def make_iterator(q, n):
 
 def test_threading():
     # See issue #20
+
+    if IS_PYPY:
+        pytest.xfail("These threads hang on pypy for some reason.")
 
     num_threads = 16
     num_frames = 5
