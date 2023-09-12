@@ -37,8 +37,8 @@ def test_threading():
 
     for i in range(num_threads * num_frames):
         print(i, end=" ")
-        q.get()
         gc.collect()  # this seems to help invoke the segfault earlier
+        q.get()
 
 
 if __name__ == "__main__":
