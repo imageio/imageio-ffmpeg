@@ -161,9 +161,8 @@ def parse_ffmpeg_header(text):
     # the regexp omits values of "1k tbr" which seems a specific edge-case #262
     # it seems that tbr is generally to be preferred #262
     fps = 0
-    for line in (videolines[0], videolines[-1]):
-        matches = re.findall(r" ([0-9]+\.?[0-9]*) (tbr|fps)", line)
-        matches.sort(key=lambda x: x[1] == "tbr", reverse=True)
+    for line in [videolines[0]]:
+        matches = re.findall(r" ([0-9]+\.?[0-9]*) (fps)", line)
         if matches:
             fps = float(matches[0][0].strip())
     meta["fps"] = fps
