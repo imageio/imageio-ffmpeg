@@ -14,17 +14,18 @@ def setup_module():
     ensure_test_files()
 
 
+def make_iterator(q, n):
+    for i in range(n):
+        gen = imageio_ffmpeg.read_frames(test_file1)
+        gen.__next__()  # meta data
+        q.put(gen.__next__())  # first frame
+
+
 def test_threading():
     # See issue #20
 
     num_threads = 16
     num_frames = 5
-
-    def make_iterator(q, n):
-        for i in range(n):
-            gen = imageio_ffmpeg.read_frames(test_file1)
-            gen.__next__()  # meta data
-            q.put(gen.__next__())  # first frame
 
     q = queue.Queue()
     threads = []
@@ -41,5 +42,5 @@ def test_threading():
 
 
 if __name__ == "__main__":
-    # setup_module()
+    setup_module()
     test_threading()
