@@ -57,8 +57,8 @@ setup(
     platforms="any",
     provides=["imageio_ffmpeg"],
     python_requires=">=3.5",
-    setup_requires=["pip>19"],
-    install_requires=[],
+    setup_requires=[],
+    install_requires=["setuptools"],
     packages=["imageio_ffmpeg"],
     package_dir={"imageio_ffmpeg": "imageio_ffmpeg"},
     package_data={"imageio_ffmpeg": ["binaries/*.*"]},
@@ -81,5 +81,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
 )
