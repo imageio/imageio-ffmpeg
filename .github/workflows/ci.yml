@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -66,7 +66,7 @@ jobs:
             os: macos-latest
             pyversion: '3.11'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.pyversion }}
         uses: actions/setup-python@v4
         with:
