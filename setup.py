@@ -62,7 +62,7 @@ setup(
     packages=["imageio_ffmpeg", "imageio_ffmpeg.binaries"],
     package_data={"imageio_ffmpeg.binaries": ["*.*"]},
     include_package_data=True,
-    zip_safe=False,
+    zip_safe=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",
