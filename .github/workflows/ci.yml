@@ -80,5 +80,4 @@ jobs:
         run: |
             python -c "import sys; print(sys.version, '\n', sys.prefix)";
             python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_version())'
-            python -c "import imageio_ffmpeg; print(imageio_ffmpeg); import imageio_ffmpeg.binaries; print(imageio_ffmpeg.binaries);"
-            invoke test
+            pytest tests -v --cov=imageio_ffmpeg --cov-report=term
