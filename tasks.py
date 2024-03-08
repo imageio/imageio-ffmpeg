@@ -273,7 +273,7 @@ def black_wrapper(writeback):
 def clear_binaries_dir(target_dir):
     assert os.path.isdir(target_dir)
     for fname in os.listdir(target_dir):
-        if fname != "README.md":
+        if fname not in ["README.md", "__init__.py"]:
             print("Removing", fname, "...", end="")
             os.remove(os.path.join(target_dir, fname))
             print("done")
