@@ -75,7 +75,7 @@ jobs:
             pip install invoke pytest pytest-cov
             invoke get-ffmpeg-binary
             pip install .
-            rm -rf ./imageio_ffmpeg
+            rm -r ./imageio_ffmpeg
       - name: Test with pytest
         run: |
             python -c "import sys; print(sys.version, '\n', sys.prefix)";
