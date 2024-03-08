@@ -76,9 +76,11 @@ jobs:
             python -m pip install --upgrade pip
             pip install psutil
             pip install invoke pytest pytest-cov
-            invoke get-ffmpeg-binary;
+            invoke get-ffmpeg-binary
+            pip install .
+            rm -r ./imageio_ffmpeg
       - name: Test with pytest
         run: |
             python -c "import sys; print(sys.version, '\n', sys.prefix)";
             python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_version())'
-            invoke test
+            pytest tests -v --cov=imageio_ffmpeg --cov-report=term
