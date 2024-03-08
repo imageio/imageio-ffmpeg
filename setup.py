@@ -59,7 +59,7 @@ setup(
     python_requires=">=3.5",
     setup_requires=[],
     install_requires=["setuptools"],
-    packages=["imageio_ffmpeg"],
+    packages=["imageio_ffmpeg", "imageio_ffmpeg.binaries"],
     package_dir={"imageio_ffmpeg": "imageio_ffmpeg"},
     package_data={"imageio_ffmpeg.binaries": ["*.*"]},
     include_package_data=True,
