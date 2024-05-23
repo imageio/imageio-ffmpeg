@@ -3,8 +3,7 @@ import os
 import subprocess
 import sys
 from functools import lru_cache
-
-from pkg_resources import resource_filename
+import importlib.resources
 
 from ._definitions import FNAME_PER_PLATFORM, get_platform
 
@@ -42,8 +41,7 @@ def _get_ffmpeg_exe():
     plat = get_platform()
 
     # 2. Try from here
-    bin_dir = resource_filename("imageio_ffmpeg", "binaries")
-    exe = os.path.join(bin_dir, FNAME_PER_PLATFORM.get(plat, ""))
+    exe = os.path.join(_get_bin_dir(), FNAME_PER_PLATFORM.get(plat, ""))
     if exe and os.path.isfile(exe) and _is_valid_exe(exe):
         return exe
 
@@ -62,6 +60,18 @@ def _get_ffmpeg_exe():
         return exe
 
     return None
+
+
+def _get_bin_dir():
+    if sys.version_info < (3, 9):
+        context = importlib.resources.path("imageio_ffmpeg.binaries", "__init__.py")
+    else:
+        ref = importlib.resources.files("imageio_ffmpeg.binaries") / "__init__.py"
+        context = importlib.resources.as_file(ref)
+    with context as path:
+        pass
+    # Return the dir. We assume that the data files are on a normal dir on the fs.
+    return str(path.parent)
 
 
 def _popen_kwargs(prevent_sigint=False):
