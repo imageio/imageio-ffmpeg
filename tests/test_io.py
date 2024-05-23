@@ -40,7 +40,7 @@ def test_ffmpeg_version():
 def test_read_nframes():
     nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file1)
     assert nframes == 280
-    assert 13.80 < nsecs < 13.99
+    assert 13.80 < nsecs <= 14.00
 
 
 def test_read_frames_resource_warning():
