@@ -37,7 +37,7 @@ def get_platform():
 # Platform string -> ffmpeg filename
 FNAME_PER_PLATFORM = {
     "osx-arm64": "ffmpeg-osx-arm64-v7.0", # Apple Silicon
-    "osx64": "ffmpeg-osx64-v4.2.2",  # 10.10+
+    "osx64": "ffmpeg-osx-x86-v7.0",  # 10.9+
     "win32": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
     "win64": "ffmpeg-win64-v4.2.2.exe",
     # "linux32": "ffmpeg-linux32-v4.2.2",
