@@ -45,7 +45,7 @@ FNAME_PER_PLATFORM = {
     "linuxaarch64": "ffmpeg-linuxaarch64-v4.2.2",
 }
 
-osxplats = "macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64"
+osxplats = "macosx_10_9_intel.macosx_10_9_x86_64"
 osxarmplats = "macosx_11_0_arm64"
 
 # Wheel tag -> platform string
