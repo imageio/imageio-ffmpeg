@@ -46,7 +46,7 @@ FNAME_PER_PLATFORM = {
 }
 
 osxplats = "macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64"
-osxarmplats = "macosx_11_0_arm64.macosx_12_0_arm64.macosx_13_0_arm64.macosx_14_0_arm64"
+osxarmplats = "macosx_11_0_arm64"
 
 # Wheel tag -> platform string
 WHEEL_BUILDS = {
