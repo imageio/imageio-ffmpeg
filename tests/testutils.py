@@ -1,5 +1,6 @@
 import logging.handlers
 import os
+import time
 import tempfile
 from urllib.request import urlopen
 
@@ -47,8 +48,12 @@ def no_warnings_allowed(f):
 
 
 def get_ffmpeg_pids():
+    time.sleep(0.01)
     pids = set()
     for p in psutil.process_iter():
-        if "ffmpeg" in p.name().lower():
-            pids.add(p.pid)
+        try:
+            if "ffmpeg" in p.name().lower():
+                pids.add(p.pid)
+        except psutil.NoSuchProcess:
+            pass
     return pids
