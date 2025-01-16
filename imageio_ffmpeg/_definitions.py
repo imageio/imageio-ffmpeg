@@ -1,48 +1,58 @@
+import sys
 import platform
-import struct
+
 
 __version__ = "0.5.1"
 
 
 def get_platform():
-    bits = struct.calcsize("P") * 8
-    if platform.system().lower().startswith("linux"):
-        architecture = platform.machine()
-        if architecture == "aarch64":
-            return "linuxaarch64"
-        return "linux{}".format(bits)
-    elif platform.system().lower().startswith("freebsd"):
-        return "freebsd{}".format(bits)
-    elif platform.system().lower().startswith("win"):
-        return "win{}".format(bits)
-    elif platform.system().lower().startswith("cygwin"):
-        return "win{}".format(bits)
-    elif platform.system().lower().startswith("darwin"):
-        if platform.processor().lower().startswith("arm"):  # Apple Silicon
-            return "osx-arm{}".format(bits)
-        else:
-            return "osx-{}".format(bits)
-    else:  # pragma: no cover
-        return None
+    # get_os_string and get_arch are taken from wgpu-py
+    return _get_os_string() + "-" + _get_arch()
+
+
+def _get_os_string():
+    if sys.platform.startswith("win"):
+        return "windows"
+    elif sys.platform.startswith("darwin"):
+        return "macos"
+    elif sys.platform.startswith("linux"):
+        return "linux"
+    else:
+        return sys.platform
+
+
+def _get_arch():
+    # See e.g.: https://stackoverflow.com/questions/45124888
+    is_64_bit = sys.maxsize > 2**32
+    machine = platform.machine()
+
+    if machine == "armv7l":
+        # Raspberry pi
+        detected_arch = "armv7"
+    elif is_64_bit and machine.startswith(("arm", "aarch64")):
+        # Includes MacOS M1, arm linux, ...
+        detected_arch = "aarch64"
+    elif is_64_bit:
+        detected_arch = "x86_64"
+    else:
+        detected_arch = "i686"
+    return detected_arch
 
 
 # The Linux static builds (https://johnvansickle.com/ffmpeg/) are build
-# for Linux kernels 2.6.32 and up (at the time of writing, ffmpeg v4.1).
-# This corresponds to CentOS 6. This means we should use manylinux2010 and not
-# manylinux1.
-# manylinux1: https://www.python.org/dev/peps/pep-0513
-# manylinux2010: https://www.python.org/dev/peps/pep-0571
+# for Linux kernels 3.2.0 and up (at the time of writing, ffmpeg v7.0.2).
+# This corresponds to Ubuntu 12.04 / Debian 7. I'm not entirely sure'
+# what manylinux matches that, but I think manylinux2014 should be safe.
 
 
 # Platform string -> ffmpeg filename
 FNAME_PER_PLATFORM = {
-    "osx-arm64": "ffmpeg-osx-arm64-v7.0",  # Apple Silicon
-    "osx64": "ffmpeg-osx-x86-v7.0",  # 10.9+
-    "win32": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
-    "win64": "ffmpeg-win64-v4.2.2.exe",
-    # "linux32": "ffmpeg-linux32-v4.2.2",
-    "linux64": "ffmpeg-linux64-v4.2.2",  # Kernel 3.2.0+
-    "linuxaarch64": "ffmpeg-linuxaarch64-v4.2.2",
+    "macos-aarch64": "ffmpeg-macos-aarch64-v7.1",
+    "macos-x86_64": "ffmpeg-macos-x86_64-v7.1",  # 10.9+
+    "windows-x86_64": "ffmpeg-win-x86_64-v7.1.exe",
+    "windows-i686": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
+    "linux-aarch64": "ffmpeg-linux-aarch64-v7.0.2",  # Kernel 3.2.0+
+    "linux-x86_64": "ffmpeg-linux-x86_64-v7.0.2",
 }
 
 osxplats = "macosx_10_9_intel.macosx_10_9_x86_64"
@@ -50,10 +60,10 @@ osxarmplats = "macosx_11_0_arm64"
 
 # Wheel tag -> platform string
 WHEEL_BUILDS = {
-    "py3-none-manylinux2010_x86_64": "linux64",
-    "py3-none-manylinux2014_aarch64": "linuxaarch64",
-    "py3-none-" + osxplats: "osx64",  # Apple Intel
-    "py3-none-" + osxarmplats: "osx-arm64",  # Apple Silicon
-    "py3-none-win32": "win32",
-    "py3-none-win_amd64": "win64",
+    "py3-none-manylinux2014_x86_64": "linux-x86_64",
+    "py3-none-manylinux2014_aarch64": "linux-aarch64",
+    "py3-none-" + osxplats: "macos-x86_64",
+    "py3-none-" + osxarmplats: "macos-aarch64",
+    "py3-none-win32": "windows-i686",
+    "py3-none-win_amd64": "windows-x86_64",
 }
