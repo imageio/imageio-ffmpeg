@@ -26,7 +26,7 @@ if "upload" in sys.argv:
 if "sdist" in sys.argv:
     target_dir = os.path.abspath(os.path.join(this_dir, "imageio_ffmpeg", "binaries"))
     for fname in os.listdir(target_dir):
-        if fname != "README.md":
+        if fname not in ["README.md", "__init__.py"]:
             os.remove(os.path.join(target_dir, fname))
 
 
@@ -58,7 +58,7 @@ setup(
     provides=["imageio_ffmpeg"],
     python_requires=">=3.5",
     setup_requires=[],
-    install_requires=["setuptools"],
+    install_requires=[],
     packages=["imageio_ffmpeg", "imageio_ffmpeg.binaries"],
     package_data={"imageio_ffmpeg.binaries": ["*.*"]},
     include_package_data=True,
