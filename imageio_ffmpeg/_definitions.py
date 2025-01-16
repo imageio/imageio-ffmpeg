@@ -52,7 +52,7 @@ FNAME_PER_PLATFORM = {
     "win-x86_64": "ffmpeg-win-x86_64-v7.1.exe",
     "win-i686": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
     "linux-aarch64": "ffmpeg-linux-aarch64-v7.0.2",  # Kernel 3.2.0+
-    "linux-x86_64": "ffmpeg-linux-x86_64-v117.0.2",
+    "linux-x86_64": "ffmpeg-linux-x86_64-v7.0.2",
 }
 
 osxplats = "macosx_10_9_intel.macosx_10_9_x86_64"
