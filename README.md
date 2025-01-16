@@ -19,6 +19,8 @@ This library is used as the basis for the
 but it can also be used by itself. Imageio provides a higher level API,
 and adds support for e.g. cameras and seeking.
 
+This library was created before [PyAV](https://github.com/PyAV-Org/PyAV) was a thing. But now they have binary wheels for many platforms. You should probably use `PyAV` instead; it is faster and offers more features.
+
 
 ## Installation
 
