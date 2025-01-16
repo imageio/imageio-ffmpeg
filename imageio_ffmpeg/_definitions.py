@@ -49,8 +49,8 @@ def _get_arch():
 FNAME_PER_PLATFORM = {
     "macos-aarch64": "ffmpeg-macos-aarch64-v7.1",
     "macos-x86_64": "ffmpeg-macos-x86_64-v7.1",  # 10.9+
-    "win-x86_64": "ffmpeg-win-x86_64-v7.1.exe",
-    "win-i686": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
+    "windows-x86_64": "ffmpeg-win-x86_64-v7.1.exe",
+    "windows-i686": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
     "linux-aarch64": "ffmpeg-linux-aarch64-v7.0.2",  # Kernel 3.2.0+
     "linux-x86_64": "ffmpeg-linux-x86_64-v7.0.2",
 }
@@ -64,6 +64,6 @@ WHEEL_BUILDS = {
     "py3-none-manylinux2014_aarch64": "linux-aarch64",
     "py3-none-" + osxplats: "macos-x86_64",
     "py3-none-" + osxarmplats: "macos-aarch64",
-    "py3-none-win32": "win-i686",
-    "py3-none-win_amd64": "win-x86_64",
+    "py3-none-win32": "windows-i686",
+    "py3-none-win_amd64": "windows-x86_64",
 }
