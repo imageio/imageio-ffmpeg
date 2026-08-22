@@ -26,8 +26,8 @@ This library was created before [PyAV](https://github.com/PyAV-Org/PyAV) was a t
 
 This library works with any version of Python 3.7+ (including Pypy).
 There are no further dependencies. The wheels on Pypi include the ffmpeg
-executable for all common platforms (Windows 7+, Linux kernel 2.6.32+,
-OSX 10.9+). Install using:
+executable for all common platforms (Windows 7+ on x86 and Windows 11 on
+ARM64, Linux kernel 2.6.32+, OSX 10.9+). Install using:
 
 ```
 $ pip install --upgrade imageio-ffmpeg

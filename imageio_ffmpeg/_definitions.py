@@ -24,7 +24,7 @@ def _get_os_string():
 def _get_arch():
     # See e.g.: https://stackoverflow.com/questions/45124888
     is_64_bit = sys.maxsize > 2**32
-    machine = platform.machine()
+    machine = platform.machine().lower()
 
     if machine == "armv7l":
         # Raspberry pi
@@ -49,6 +49,7 @@ def _get_arch():
 FNAME_PER_PLATFORM = {
     "macos-aarch64": "ffmpeg-macos-aarch64-v7.1",
     "macos-x86_64": "ffmpeg-macos-x86_64-v7.1",  # 10.9+
+    "windows-aarch64": "ffmpeg-win-aarch64-v8.1.exe",
     "windows-x86_64": "ffmpeg-win-x86_64-v7.1.exe",
     "windows-i686": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
     "linux-aarch64": "ffmpeg-linux-aarch64-v7.0.2",  # Kernel 3.2.0+
@@ -66,4 +67,5 @@ WHEEL_BUILDS = {
     "py3-none-" + osxarmplats: "macos-aarch64",
     "py3-none-win32": "windows-i686",
     "py3-none-win_amd64": "windows-x86_64",
+    "py3-none-win_arm64": "windows-aarch64",
 }

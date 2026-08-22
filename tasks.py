@@ -132,8 +132,8 @@ def get_ffmpeg_binary(ctx):
 
 
 @task
-def build(ctx):
-    """Build packages for different platforms. Dont release yet."""
+def build(ctx, platform=None):
+    """Build packages for all platforms, or only the selected platform."""
 
     # Get version and more
     sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
@@ -141,6 +141,13 @@ def build(ctx):
         from _definitions import FNAME_PER_PLATFORM, WHEEL_BUILDS, __version__
     finally:
         sys.path.pop(0)
+
+    wheel_builds = list(WHEEL_BUILDS.items())
+    if platform:
+        wheel_builds = [item for item in wheel_builds if item[1] == platform]
+        if not wheel_builds:
+            supported = ", ".join(sorted(set(WHEEL_BUILDS.values())))
+            sys.exit("Unknown platform {!r}; choose from: {}".format(platform, supported))
 
     # Clear up any build artifacts
     clean(ctx)
@@ -174,7 +181,7 @@ def build(ctx):
     print("done")
 
     # Build for different platforms
-    for wheeltag, platform in WHEEL_BUILDS.items():
+    for wheeltag, platform in wheel_builds:
         ffmpeg_fname = FNAME_PER_PLATFORM[platform]
 
         # Edit
