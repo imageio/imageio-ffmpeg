@@ -3,6 +3,7 @@ import subprocess
 import sys
 import time
 from collections import defaultdict
+from fractions import Fraction
 from functools import lru_cache
 
 from ._parsing import LogCatcher, cvsecs, parse_ffmpeg_header
@@ -525,7 +526,9 @@ def write_frames(
         "-s",
         sizestr,
     ]
-    cmd += ["-pix_fmt", pix_fmt_in, "-r", "{:.02f}".format(fps)] + input_params
+    # Pass fps as a rational so values like 24000/1001 are not rounded (#116).
+    fps_arg = str(Fraction(fps).limit_denominator())
+    cmd += ["-pix_fmt", pix_fmt_in, "-r", fps_arg] + input_params
     cmd += ["-i", "-"] + audio_params
     cmd += ["-vcodec", codec, "-pix_fmt", pix_fmt_out]
 
