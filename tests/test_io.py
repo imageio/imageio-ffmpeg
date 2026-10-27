@@ -243,6 +243,31 @@ def test_write_fps_precision():
 
 
 @no_warnings_allowed
+def test_write_fps_fraction():
+    """A Fraction fps is passed to ffmpeg exactly, without limiting it."""
+    captured = []
+    real_popen = subprocess.Popen
+
+    def spy_popen(cmd, *args, **kwargs):
+        captured.append(list(cmd))
+        return real_popen(cmd, *args, **kwargs)
+
+    imageio_ffmpeg._io.subprocess.Popen = spy_popen
+    try:
+        gen = imageio_ffmpeg.write_frames(
+            test_file2, (64, 64), fps=Fraction(30000, 1001)
+        )
+        gen.send(None)
+        gen.send(bytes(64 * 64 * 3))
+        gen.close()
+    finally:
+        imageio_ffmpeg._io.subprocess.Popen = real_popen
+
+    cmd = [c for c in captured if "-r" in c][0]
+    assert cmd[cmd.index("-r") + 1] == "30000/1001"
+
+
+@no_warnings_allowed
 def test_write_pix_fmt_in():
     sizes = []
     for pixfmt, bpp in [("gray", 1), ("rgb24", 3), ("rgba", 4)]:
