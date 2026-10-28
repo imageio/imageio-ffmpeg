@@ -219,7 +219,7 @@ def write_frames(
         pix_fmt_in (str): the pixel format of incoming frames.
             E.g. "gray", "gray8a", "rgb24", or "rgba". Default "rgb24".
         pix_fmt_out (str): the pixel format to store frames. Default yuv420p".
-        fps (float): The frames per second. Default 16.
+        fps (float or Fraction): The frames per second. Default 16.
         quality (float): A measure for quality between 0 and 10. Default 5.
             Ignored if bitrate is given.
         bitrate (str): The bitrate, e.g. "192k". The defaults are pretty good.
