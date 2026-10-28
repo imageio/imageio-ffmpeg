@@ -3,6 +3,7 @@ import subprocess
 import sys
 import time
 from collections import defaultdict
+from fractions import Fraction
 from functools import lru_cache
 
 from ._parsing import LogCatcher, cvsecs, parse_ffmpeg_header
@@ -425,7 +426,7 @@ def write_frames(
         pix_fmt_in (str): the pixel format of incoming frames.
             E.g. "gray", "gray8a", "rgb24", or "rgba". Default "rgb24".
         pix_fmt_out (str): the pixel format to store frames. Default yuv420p".
-        fps (float): The frames per second. Default 16.
+        fps (float or Fraction): The frames per second. Default 16.
         quality (float): A measure for quality between 0 and 10. Default 5.
             Ignored if bitrate is given.
         bitrate (str): The bitrate, e.g. "192k". The defaults are pretty good.
@@ -485,7 +486,7 @@ def write_frames(
         assert False, "size must be str or tuple"
     assert isinstance(pix_fmt_in, str), "pix_fmt_in must be str"
     assert isinstance(pix_fmt_out, str), "pix_fmt_out must be str"
-    assert isinstance(fps, floatish), "fps must be float"
+    assert isinstance(fps, (*floatish, Fraction)), "fps must be float or Fraction"
     if quality is not None:
         assert isinstance(quality, floatish), "quality must be float"
         assert 1 <= quality <= 10, "quality must be between 1 and 10 inclusive"
@@ -525,7 +526,11 @@ def write_frames(
         "-s",
         sizestr,
     ]
-    cmd += ["-pix_fmt", pix_fmt_in, "-r", "{:.02f}".format(fps)] + input_params
+    # Pass fps as a rational so values like 24000/1001 are not rounded (#116).
+    if not isinstance(fps, Fraction):
+        fps = Fraction(fps).limit_denominator()
+    fps_arg = str(fps)
+    cmd += ["-pix_fmt", pix_fmt_in, "-r", fps_arg] + input_params
     cmd += ["-i", "-"] + audio_params
     cmd += ["-vcodec", codec, "-pix_fmt", pix_fmt_out]
 

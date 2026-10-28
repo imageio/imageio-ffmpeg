@@ -2,10 +2,12 @@
 The main tests for the public API.
 """
 
+import subprocess
 import tempfile
 import time
 import types
 import warnings
+from fractions import Fraction
 
 from pytest import raises, skip
 from testutils import (
@@ -201,6 +203,68 @@ def test_write1():
         for frame in gen2:
             count += 1
         assert count == n
+
+
+@no_warnings_allowed
+def test_write_fps_precision():
+    """Issue #116: fps must not be rounded to two decimals when writing.
+
+    ffmpeg still prints fps at two decimals in its header, so round-trip
+    metadata cannot detect this. Inspect the -r argument actually passed.
+    """
+    fps = 24000 / 1001  # NTSC film; "{:.02f}".format(fps) is "23.98"
+    captured = []
+    real_popen = subprocess.Popen
+
+    def spy_popen(cmd, *args, **kwargs):
+        captured.append(list(cmd))
+        return real_popen(cmd, *args, **kwargs)
+
+    imageio_ffmpeg._io.subprocess.Popen = spy_popen
+    try:
+        gen = imageio_ffmpeg.write_frames(test_file2, (64, 64), fps=fps)
+        gen.send(None)
+        for i in range(9):
+            data = bytes([min(255, 100 + i * 10)] * 64 * 64 * 3)
+            gen.send(data)
+        gen.close()
+    finally:
+        imageio_ffmpeg._io.subprocess.Popen = real_popen
+
+    write_cmds = [c for c in captured if "-r" in c]
+    assert write_cmds, "write_frames did not launch ffmpeg with -r"
+    cmd = write_cmds[0]
+    r_value = cmd[cmd.index("-r") + 1]
+    assert r_value != "{:.02f}".format(fps)
+    assert abs(float(Fraction(r_value)) - fps) < 1e-12
+
+    nframes, nsecs = imageio_ffmpeg.count_frames_and_secs(test_file2)
+    assert nframes == 9
+
+
+@no_warnings_allowed
+def test_write_fps_fraction():
+    """A Fraction fps is passed to ffmpeg exactly, without limiting it."""
+    captured = []
+    real_popen = subprocess.Popen
+
+    def spy_popen(cmd, *args, **kwargs):
+        captured.append(list(cmd))
+        return real_popen(cmd, *args, **kwargs)
+
+    imageio_ffmpeg._io.subprocess.Popen = spy_popen
+    try:
+        gen = imageio_ffmpeg.write_frames(
+            test_file2, (64, 64), fps=Fraction(30000, 1001)
+        )
+        gen.send(None)
+        gen.send(bytes(64 * 64 * 3))
+        gen.close()
+    finally:
+        imageio_ffmpeg._io.subprocess.Popen = real_popen
+
+    cmd = [c for c in captured if "-r" in c][0]
+    assert cmd[cmd.index("-r") + 1] == "30000/1001"
 
 
 @no_warnings_allowed
@@ -454,6 +518,7 @@ if __name__ == "__main__":
     test_reading4()
     test_reading_invalid_video()
     test_write1()
+    test_write_fps_precision()
     test_write_pix_fmt_in()
     test_write_pix_fmt_out()
     test_write_wmv()
