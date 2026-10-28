@@ -1,5 +1,4 @@
-""" Tests more special use-cases.
-"""
+"""Tests more special use-cases."""
 
 import gc
 import sys
@@ -10,7 +9,6 @@ from testutils import ensure_test_files, test_file1
 import pytest
 
 import imageio_ffmpeg
-
 
 IS_PYPY = "__pypy__" in sys.builtin_module_names
 
