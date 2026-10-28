@@ -33,8 +33,7 @@ def test_limit_lines():
 def test_get_correct_fps1():
     # from issue imageio#262
 
-    sample = dedent(
-        r"""
+    sample = dedent(r"""
         fmpeg version 3.2.2 Copyright (c) 2000-2016 the FFmpeg developers
         built with Apple LLVM version 8.0.0 (clang-800.0.42.1)
         configuration: --prefix=/usr/local/Cellar/ffmpeg/3.2.2 --enable-shared --enable-pthreads --enable-gpl --enable-version3 --enable-hardcoded-tables --enable-avresample --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-frei0r --enable-libass --enable-libfdk-aac --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopus --enable-librtmp --enable-libschroedinger --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libxvid --enable-opencl --disable-lzma --enable-libopenjpeg --disable-decoder=jpeg2000 --extra-cflags=-I/usr/local/Cellar/openjpeg/2.1.2/include/openjpeg-2.1 --enable-nonfree --enable-vda
@@ -70,8 +69,7 @@ def test_get_correct_fps1():
             handler_name    : vide
             encoder         : Lavc57.64.101 rawvideo
         Stream mapping:
-        """
-    )
+        """)
 
     info = parse_ffmpeg_header(sample)
     assert info["fps"] == 29.46
@@ -80,8 +78,7 @@ def test_get_correct_fps1():
 def test_get_correct_fps2():
     # from issue imageio#262
 
-    sample = dedent(
-        r"""
+    sample = dedent(r"""
         ffprobe version 3.2.2 Copyright (c) 2007-2016 the FFmpeg developers
         built with Apple LLVM version 8.0.0 (clang-800.0.42.1)
         configuration: --prefix=/usr/local/Cellar/ffmpeg/3.2.2 --enable-shared --enable-pthreads --enable-gpl --enable-version3 --enable-hardcoded-tables --enable-avresample --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-frei0r --enable-libass --enable-libfdk-aac --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopus --enable-librtmp --enable-libschroedinger --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libxvid --enable-opencl --disable-lzma --enable-libopenjpeg --disable-decoder=jpeg2000 --extra-cflags=-I/usr/local/Cellar/openjpeg/2.1.2/include/openjpeg-2.1 --enable-nonfree --enable-vda
@@ -106,8 +103,7 @@ def test_get_correct_fps2():
             Stream #0:1(eng): Video: mpeg4 (Simple Profile) (mp4v / 0x7634706D), yuv420p, 640x480 [SAR 1:1 DAR 4:3], 1785 kb/s, 29.27 fps, 1k tbr, 90k tbn, 1k tbc (default)
             Metadata:
             handler_name    : vide
-        """
-    )
+        """)
 
     info = parse_ffmpeg_header(sample)
     assert info["fps"] == 29.27
@@ -116,8 +112,7 @@ def test_get_correct_fps2():
 def test_get_correct_rotation():
     # from issue imageio-ffmpeg#38
 
-    sample = dedent(
-        r"""
+    sample = dedent(r"""
         ffmpeg version 4.2.2 Copyright (c) 2000-2019 the FFmpeg developers
           built with Apple clang version 11.0.0 (clang-1100.0.33.8)
           configuration: --enable-gpl --enable-version3 --enable-sdl2 --enable-fontconfig --enable-gnutls --enable-iconv --enable-libass --enable-libdav1d --enable-libbluray --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libopus --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libtheora --enable-libtwolame --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libzimg --enable-lzma --enable-zlib --enable-gmp --enable-libvidstab --enable-libvorbis --enable-libvo-amrwbenc --enable-libmysofa --enable-libspeex --enable-libxvid --enable-libaom --enable-appkit --enable-avfoundation --enable-coreimage --enable-audiotoolbox
@@ -156,16 +151,14 @@ def test_get_correct_rotation():
             com.android.version: 10
             encoder         : Lavf58.29.100
             Stream #0:0(eng): Video: rawvideo (RGB[24] / 0x18424752), rgb24, 480x720 [SAR 1:1 DAR 2:3], q=2-31, 995328 kb/s, 120 fps, 120 tbn, 120 tbc (default)
-        """
-    )
+        """)
 
     info = parse_ffmpeg_header(sample)
     assert info["rotate"] == 270
 
 
 def test_comma_in_pixel_format():
-    sample = dedent(
-        r"""
+    sample = dedent(r"""
         ffmpeg version 5.1.2 Copyright (c) 2000-2022 the FFmpeg developers
           built with gcc 11.3.0 (conda-forge gcc 11.3.0-19)
           configuration: --prefix=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_plac --cc=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-cc --cxx=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-c++ --nm=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-nm --ar=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/x86_64-conda-linux-gnu-ar --disable-doc --disable-openssl --enable-demuxer=dash --enable-hardcoded-tables --enable-libfreetype --enable-libfontconfig --enable-libopenh264 --enable-gnutls --enable-libmp3lame --enable-libvpx --enable-pthreads --enable-vaapi --disable-gpl --enable-libaom --enable-libsvtav1 --enable-libxml2 --enable-pic --enable-shared --disable-static --enable-version3 --enable-zlib --pkg-config=/home/conda/feedstock_root/build_artifacts/ffmpeg_1671040268898/_build_env/bin/pkg-config
@@ -198,8 +191,7 @@ def test_comma_in_pixel_format():
             compatible_brands: isomiso2avc1mp41
             encoder         : Lavf59.27.100
           Stream #0:0(und): Video: rawvideo (RGB[24] / 0x18424752), rgb24(pc, gbr/unknown/unknown, progressive), 64x64, q=2-31, 983 kb/s, 10 fps, 10 tbn (default)
-    """
-    )
+    """)
     info = parse_ffmpeg_header(sample)
     assert info["pix_fmt"] == "yuv420p(tv, progressive)"
 

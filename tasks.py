@@ -1,5 +1,4 @@
-""" Invoke tasks for imageio-ffmpeg
-"""
+"""Invoke tasks for imageio-ffmpeg"""
 
 import importlib
 import os
