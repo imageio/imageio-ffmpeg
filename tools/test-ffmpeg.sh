@@ -52,8 +52,8 @@ for spec in "libx264 mp4" "libx265 mp4" "libvpx-vp9 webm" "libsvtav1 mkv" "libao
     grep -qE "^ [^ ]+ $codec " <<< "$encoders" || { echo "skip $codec (not available)"; skipped+=("$codec"); continue; }
     out="$tmp/$codec.$ext"
     extra=()
-    # libaom's default speed is very slow.
-    [[ $codec == libaom-av1 ]] && extra=(-cpu-used 8)
+    # libaom's default speed is very slow; old ffmpeg (4.2) marks it experimental.
+    [[ $codec == libaom-av1 ]] && extra=(-cpu-used 8 -strict experimental)
     "$ff" -nostdin -v error -f lavfi -i "testsrc=size=${w}x${h}:rate=10" -frames:v $n \
         -c:v "$codec" ${extra[@]+"${extra[@]}"} -pix_fmt yuv420p -y "$out" || fail "encoding with $codec"
     bytes=$("$ff" -nostdin -v error -i "$out" -f image2pipe -pix_fmt rgb24 -vcodec rawvideo - | wc -c)
