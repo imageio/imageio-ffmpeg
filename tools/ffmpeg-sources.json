@@ -1,0 +1,72 @@
+{
+  "linux-aarch64": {
+    "file": "ffmpeg-linux-aarch64-v9.0.2",
+    "version": "9.0.2",
+    "source": "BtbN/FFmpeg-Builds autobuild-2026-09-30-13-08",
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-linuxarm64-gpl-9.0.tar.xz",
+    "sha256": "91afcd7695d4bbbb9e0057aa10baaf9875ec4e1a97303f9059ec971336a2ab46",
+    "verified": "SHA-256 matches BtbN checksums.sha256; SHA-256 matches GitHub asset digest",
+    "member": "/bin/ffmpeg$",
+    "exe_sha256": "0b0b5ac30495b4e07ce1321b8d58200f901f57782884a8b6b264c7528c2c9e77"
+  },
+  "linux-x86_64": {
+    "file": "ffmpeg-linux-x86_64-v9.0.2",
+    "version": "9.0.2",
+    "source": "BtbN/FFmpeg-Builds autobuild-2026-09-30-13-08",
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-linux64-gpl-9.0.tar.xz",
+    "sha256": "68ee646831adaae2495618346f3bba94ff207ff83bbd34d643e7004730d66269",
+    "verified": "SHA-256 matches BtbN checksums.sha256; SHA-256 matches GitHub asset digest",
+    "member": "/bin/ffmpeg$",
+    "exe_sha256": "0d709a0bed1a43f24cd2c420878c63afea4580671b6949ad19ed124572f3bc3d"
+  },
+  "macos-aarch64": {
+    "file": "ffmpeg-macos-aarch64-v9.0",
+    "version": "9.0",
+    "source": "osxexperts.net",
+    "url": "https://www.osxexperts.net/ffmpeg9arm.zip",
+    "sha256": "d0c06c5c68ce48af3143b262f7a9118a7c9f67de1e237fcc24ffb14df9c67af9",
+    "verified": "nothing published upstream",
+    "member": "(^|/)ffmpeg$",
+    "exe_sha256": "591260c945d0eef150e3bf82b0ef988bd36a9cecc18ff05d6679617159f0a95e"
+  },
+  "macos-x86_64": {
+    "file": "ffmpeg-macos-x86_64-v9.0.2",
+    "version": "9.0.2",
+    "source": "evermeet.cx",
+    "url": "https://evermeet.cx/ffmpeg/ffmpeg-9.0.2.zip",
+    "sha256": "4acc0be580f9b2788029eb7bd4d645ff87968911b0a62aeeb3940d42d54558d5",
+    "verified": "GPG signature verified",
+    "member": "^ffmpeg$",
+    "exe_sha256": "a45b462cf91ed89148ae218c4577e30896485d7a6792c3673bcf5f823fa01b63"
+  },
+  "windows-aarch64": {
+    "file": "ffmpeg-win-aarch64-v9.0.1.exe",
+    "version": "9.0.1",
+    "source": "BtbN/FFmpeg-Builds autobuild-2026-08-31-13-27",
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-08-31-13-27/ffmpeg-n9.0.1-11-ge47273f4d9-winarm64-gpl-9.0.zip",
+    "sha256": "7e6142ae4d04b35123eba48d91bb2c559ef43b49a6b3857f7324bbcf7266d18b",
+    "verified": "SHA-256 matches BtbN checksums.sha256; SHA-256 matches GitHub asset digest",
+    "member": "/bin/ffmpeg\\.exe$",
+    "exe_sha256": "a169b9d26b2380be66211022525c9ac16affc923ba05b561024e57c5ed4281f9"
+  },
+  "windows-i686": {
+    "file": "ffmpeg-win32-v4.2.2.exe",
+    "version": "4.2.2",
+    "source": "imageio/imageio-binaries (no upstream builds anymore)",
+    "url": "https://raw.githubusercontent.com/imageio/imageio-binaries/a6bef81365f176179722fcb899039d13ced4d4af/ffmpeg/ffmpeg-win32-v4.2.2.exe",
+    "sha256": "67f43fd32c252d35948c5154486145c73c59e95c57e718c54fe650ff7f25fe48",
+    "verified": "pinned to the file in imageio-binaries",
+    "member": null,
+    "exe_sha256": "67f43fd32c252d35948c5154486145c73c59e95c57e718c54fe650ff7f25fe48"
+  },
+  "windows-x86_64": {
+    "file": "ffmpeg-win-x86_64-v9.0.2.exe",
+    "version": "9.0.2",
+    "source": "GyanD/codexffmpeg 9.0.2 (gyan.dev essentials)",
+    "url": "https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-essentials_build.zip",
+    "sha256": "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba",
+    "verified": "SHA-256 matches gyan.dev .sha256; SHA-256 matches GitHub asset digest",
+    "member": "/bin/ffmpeg\\.exe$",
+    "exe_sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec"
+  }
+}

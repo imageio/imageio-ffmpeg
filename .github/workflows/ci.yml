@@ -33,6 +33,10 @@ jobs:
   test-builds:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        # Also on Windows, so that any failing command fails the step
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -56,28 +60,56 @@ jobs:
           - name: Linux pypy
             os: ubuntu-latest
             pyversion: 'pypy3.11'
-          # OS's
-          - name: Linux py314
+          # OS's and architectures (also smoke-testing the ffmpeg binaries)
+          - name: Linux x86_64 py314
             os: ubuntu-latest
             pyversion: '3.14'
-          - name: Windows py314
+            smoke: true
+          - name: Linux aarch64 py314
+            os: ubuntu-24.04-arm
+            pyversion: '3.14'
+            smoke: true
+          - name: Windows x86_64 py314
             os: windows-latest
             pyversion: '3.14'
-          - name: MacOS py314
+            smoke: true
+          - name: Windows i686 py314
+            os: windows-latest
+            pyversion: '3.14'
+            arch: x86
+            smoke: true
+          - name: Windows aarch64 py314
+            os: windows-11-arm
+            pyversion: '3.14'
+            smoke: true
+          - name: MacOS aarch64 py314
             os: macos-latest
             pyversion: '3.14'
+            smoke: true
+          - name: MacOS x86_64 py314
+            os: macos-15-intel
+            pyversion: '3.14'
+            smoke: true
     steps:
       - uses: actions/checkout@v7
       - name: Set up Python ${{ matrix.pyversion }}
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.pyversion }}
+          architecture: ${{ matrix.arch }}
       - name: Install dependencies
         run: |
             python -m pip install --upgrade pip
             pip install psutil
             pip install invoke pytest pytest-cov
             invoke get-ffmpeg-binary
+      - name: Smoke-test ffmpeg binary
+        if: matrix.smoke
+        env:
+          TEST_NAME: Smoke test on ${{ matrix.name }}
+        run: bash tools/test-ffmpeg.sh ffmpeg-downloads/ffmpeg-*
+      - name: Install package
+        run: |
             pip install .
             rm -r ./imageio_ffmpeg
       - name: Test with pytest
@@ -85,3 +117,34 @@ jobs:
             python -c "import sys; print(sys.version, '\n', sys.prefix)";
             python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_version())'
             pytest tests -v --cov=imageio_ffmpeg --cov-report=term
+
+  build-wheels:
+    name: Check binaries and build wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install invoke setuptools wheel
+            if ! command -v llvm-readobj >/dev/null && ! ls /usr/bin/llvm-readobj-* >/dev/null 2>&1; then
+              sudo apt-get update -q && sudo apt-get install -y -q llvm
+            fi
+      - name: Check binaries against wheel tags
+        run: invoke check-binaries
+      - name: Build wheels
+        run: invoke build
+      - name: Test Linux x86_64 wheel
+        run: |
+            pip install dist/*manylinux_2_28_x86_64.whl
+            cd /tmp
+            python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe(), imageio_ffmpeg.get_ffmpeg_version())'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error

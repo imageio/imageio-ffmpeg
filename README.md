@@ -26,14 +26,15 @@ This library was created before [PyAV](https://github.com/PyAV-Org/PyAV) was a t
 
 This library works with any version of Python 3.7+ (including Pypy).
 There are no further dependencies. The wheels on Pypi include the ffmpeg
-executable for all common platforms (Windows 7+, Linux kernel 2.6.32+,
-OSX 10.9+). Install using:
+executable for all common platforms (Windows x86_64/ARM64/32-bit, Linux
+x86_64/aarch64 with glibc 2.28+, macOS 10.13+ Intel, macOS 12+ Apple Silicon).
+Install using:
 
 ```
 $ pip install --upgrade imageio-ffmpeg
 ```
 
-(On Linux you may want to first `pip install -U pip`, since pip 19 is needed to detect the `manylinux2010` wheels.)
+(On Linux you may want to first `pip install -U pip`, since pip 20.3 is needed to detect the `manylinux_2_28` wheels.)
 
 If you're using a Conda environment: the conda package does not include
 the ffmpeg executable, but instead depends on the `ffmpeg` package from
@@ -124,6 +125,24 @@ invoke lint
 invoke -l  # to get a list of all tasks
 invoke update-readme  # after changes to the docstrings
 ```
+
+### ffmpeg binaries
+
+The ffmpeg executables in the wheels are downloaded from upstream builds
+(GitHub releases where available) and pinned by SHA-256 in
+`tools/ffmpeg-sources.json`; see `tools/download_ffmpeg.py` for the sources.
+
+```
+invoke get-ffmpeg-binary  # download the binary for this platform (dev install)
+invoke check-ffmpeg-updates  # compare the pins with the newest upstream builds
+invoke update-ffmpeg  # pin newer upstream builds (verifies their checksums/signatures)
+invoke check-binaries  # check the binaries against the wheel tags (needs bash, file, llvm-readobj)
+invoke build  # build the wheels for all platforms
+```
+
+Downloads are cached in `ffmpeg-downloads/`. Updating the macOS x86_64 build
+requires `gpgv` (set `GPGV` to its path if it is not on `PATH`).
+`tools/test-ffmpeg.sh` smoke-tests a binary on the platform it runs on.
 
 ## API
 

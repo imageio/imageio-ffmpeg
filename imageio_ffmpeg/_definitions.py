@@ -23,7 +23,7 @@ def _get_os_string():
 def _get_arch():
     # See e.g.: https://stackoverflow.com/questions/45124888
     is_64_bit = sys.maxsize > 2**32
-    machine = platform.machine()
+    machine = platform.machine().lower()  # e.g. "ARM64" on Windows
 
     if machine == "armv7l":
         # Raspberry pi
@@ -38,31 +38,32 @@ def _get_arch():
     return detected_arch
 
 
-# The Linux static builds (https://johnvansickle.com/ffmpeg/) are build
-# for Linux kernels 3.2.0 and up (at the time of writing, ffmpeg v7.0.2).
-# This corresponds to Ubuntu 12.04 / Debian 7. I'm not entirely sure'
-# what manylinux matches that, but I think manylinux2014 should be safe.
+# The binaries are downloaded from the sources pinned in
+# tools/ffmpeg-sources.json (see tools/download_ffmpeg.py, which also updates
+# the file names below). The wheel tags must match the requirements of the
+# binaries, which `invoke check-binaries` verifies:
+# * Linux (BtbN): glibc 2.28+ (manylinux_2_28), kernel 4.18+.
+# * macOS x86_64 (evermeet.cx): macOS 10.13+; aarch64 (osxexperts): 12.0+.
 
 
 # Platform string -> ffmpeg filename
 FNAME_PER_PLATFORM = {
-    "macos-aarch64": "ffmpeg-macos-aarch64-v7.1",
-    "macos-x86_64": "ffmpeg-macos-x86_64-v7.1",  # 10.9+
-    "windows-x86_64": "ffmpeg-win-x86_64-v7.1.exe",
+    "macos-aarch64": "ffmpeg-macos-aarch64-v9.0",
+    "macos-x86_64": "ffmpeg-macos-x86_64-v9.0.2",
+    "windows-x86_64": "ffmpeg-win-x86_64-v9.0.2.exe",
+    "windows-aarch64": "ffmpeg-win-aarch64-v9.0.1.exe",
     "windows-i686": "ffmpeg-win32-v4.2.2.exe",  # Windows 7+
-    "linux-aarch64": "ffmpeg-linux-aarch64-v7.0.2",  # Kernel 3.2.0+
-    "linux-x86_64": "ffmpeg-linux-x86_64-v7.0.2",
+    "linux-aarch64": "ffmpeg-linux-aarch64-v9.0.2",
+    "linux-x86_64": "ffmpeg-linux-x86_64-v9.0.2",
 }
-
-osxplats = "macosx_10_9_intel.macosx_10_9_x86_64"
-osxarmplats = "macosx_11_0_arm64"
 
 # Wheel tag -> platform string
 WHEEL_BUILDS = {
-    "py3-none-manylinux2014_x86_64": "linux-x86_64",
-    "py3-none-manylinux2014_aarch64": "linux-aarch64",
-    "py3-none-" + osxplats: "macos-x86_64",
-    "py3-none-" + osxarmplats: "macos-aarch64",
+    "py3-none-manylinux_2_28_x86_64": "linux-x86_64",
+    "py3-none-manylinux_2_28_aarch64": "linux-aarch64",
+    "py3-none-macosx_10_13_x86_64": "macos-x86_64",
+    "py3-none-macosx_12_0_arm64": "macos-aarch64",
     "py3-none-win32": "windows-i686",
     "py3-none-win_amd64": "windows-x86_64",
+    "py3-none-win_arm64": "windows-aarch64",
 }
