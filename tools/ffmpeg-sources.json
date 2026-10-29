@@ -52,7 +52,7 @@
   "windows-i686": {
     "file": "ffmpeg-win32-v4.2.2.exe",
     "version": "4.2.2",
-    "source": "imageio/imageio-binaries (no upstream builds anymore)",
+    "source": "Zeranoe 4.2.2 static build (ffmpeg.zeranoe.com, closed in 2020), via imageio/imageio-binaries",
     "url": "https://raw.githubusercontent.com/imageio/imageio-binaries/a6bef81365f176179722fcb899039d13ced4d4af/ffmpeg/ffmpeg-win32-v4.2.2.exe",
     "sha256": "67f43fd32c252d35948c5154486145c73c59e95c57e718c54fe650ff7f25fe48",
     "verified": "pinned to the file in imageio-binaries",

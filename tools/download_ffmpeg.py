@@ -25,7 +25,8 @@ Upstream sources (preferring GitHub releases where available):
     windows-aarch64  https://github.com/BtbN/FFmpeg-Builds (gpl, release branch)
     macos-x86_64     https://evermeet.cx/ffmpeg/ (GPG-signed, see tools/keys/)
     macos-aarch64    https://www.osxexperts.net/ (evermeet.cx has no ARM builds)
-    windows-i686     no upstream builds anymore; the old binary from
+    windows-i686     no upstream release builds anymore; the Zeranoe 4.2.2 build
+                     (ffmpeg.zeranoe.com, closed in 2020) from
                      https://github.com/imageio/imageio-binaries is pinned.
 
 When run in GitHub Actions, results are also written to the job summary.
