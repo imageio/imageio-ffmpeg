@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
+
+permissions:
+  contents: read
 
 
 jobs:
@@ -30,8 +34,45 @@ jobs:
             invoke lint
             invoke checkformat
 
+  build-wheels:
+    name: Check binaries and build wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install invoke setuptools wheel twine
+            if ! command -v llvm-readobj >/dev/null && ! ls /usr/bin/llvm-readobj-* >/dev/null 2>&1; then
+              sudo apt-get update -q && sudo apt-get install -y -q llvm
+            fi
+      - name: Check version matches tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+            version=$(cd imageio_ffmpeg && python -c 'from _definitions import __version__; print(__version__)')
+            if [[ "v$version" != "$GITHUB_REF_NAME" ]]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match package version $version"
+              exit 1
+            fi
+      - name: Check binaries against wheel tags
+        run: invoke check-binaries
+      - name: Build wheels
+        run: invoke build
+      - name: Check distributions
+        run: twine check dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
   test-builds:
     name: ${{ matrix.name }}
+    needs: build-wheels
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -101,50 +142,90 @@ jobs:
         run: |
             python -m pip install --upgrade pip
             pip install psutil
-            pip install invoke pytest pytest-cov
-            invoke get-ffmpeg-binary
+            pip install pytest pytest-cov
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - name: Install wheel
+        run: |
+            # pip picks the wheel matching this platform; fails if there is none
+            pip install --no-index --find-links dist --only-binary :all: imageio-ffmpeg
+            rm -r ./imageio_ffmpeg
+      - name: Check bundled ffmpeg binary
+        id: ffmpeg
+        run: |
+            exe=$(python - <<'EOF'
+            from pathlib import Path
+            import imageio_ffmpeg
+            exe = Path(imageio_ffmpeg.get_ffmpeg_exe()).resolve()
+            bin_dir = (Path(imageio_ffmpeg.__file__).parent / "binaries").resolve()
+            assert exe.parent == bin_dir, f"not using the bundled binary: {exe}"
+            print(exe.as_posix())
+            EOF
+            )
+            echo "exe=$exe" >> "$GITHUB_OUTPUT"
+            python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_version())'
       - name: Smoke-test ffmpeg binary
         if: matrix.smoke
         env:
           TEST_NAME: Smoke test on ${{ matrix.name }}
-        run: bash tools/test-ffmpeg.sh ffmpeg-downloads/ffmpeg-*
-      - name: Install package
-        run: |
-            pip install .
-            rm -r ./imageio_ffmpeg
+        run: bash tools/test-ffmpeg.sh "${{ steps.ffmpeg.outputs.exe }}"
       - name: Test with pytest
         run: |
             python -c "import sys; print(sys.version, '\n', sys.prefix)";
-            python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_version())'
             pytest tests -v --cov=imageio_ffmpeg --cov-report=term
 
-  build-wheels:
-    name: Check binaries and build wheels
+  draft-release:
+    name: Draft GitHub release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [lint-build, test-builds]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.14'
-      - name: Install dependencies
-        run: |
-            python -m pip install --upgrade pip
-            pip install invoke setuptools wheel
-            if ! command -v llvm-readobj >/dev/null && ! ls /usr/bin/llvm-readobj-* >/dev/null 2>&1; then
-              sudo apt-get update -q && sudo apt-get install -y -q llvm
-            fi
-      - name: Check binaries against wheel tags
-        run: invoke check-binaries
-      - name: Build wheels
-        run: invoke build
-      - name: Test Linux x86_64 wheel
-        run: |
-            pip install dist/*manylinux_2_28_x86_64.whl
-            cd /tmp
-            python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe(), imageio_ffmpeg.get_ffmpeg_version())'
-      - uses: actions/upload-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
-          if-no-files-found: error
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+            # Keep an existing draft (e.g. when re-running), but refresh its files
+            if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+              gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+            else
+              gh release create "$GITHUB_REF_NAME" dist/* --draft \
+                --title "$GITHUB_REF_NAME" --verify-tag --generate-notes
+            fi
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: draft-release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/imageio-ffmpeg/
+    permissions:
+      id-token: write  # for trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: Publish GitHub release
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false

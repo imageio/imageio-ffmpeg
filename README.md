@@ -144,6 +144,16 @@ Downloads are cached in `ffmpeg-downloads/`. Updating the macOS x86_64 build
 requires `gpgv` (set `GPGV` to its path if it is not on `PATH`).
 `tools/test-ffmpeg.sh` smoke-tests a binary on the platform it runs on.
 
+### Releasing
+
+CI builds the wheels once and tests each one on its target platform. To
+release, bump `__version__` in `imageio_ffmpeg/_definitions.py` and push a
+matching tag (e.g. `v0.7.1`). When all checks pass, CI creates a draft GitHub
+release with the wheels and sdist attached, publishes the same files to PyPI
+(using trusted publishing, via the `pypi` environment), and then publishes the
+draft release. If the `pypi` environment requires approval, you can review and
+edit the draft's notes before approving the upload.
+
 ## API
 
 ```py
