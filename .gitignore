@@ -5,6 +5,7 @@ __pycache__/
 
 imageio_ffmpeg/binaries/*ffmpeg*
 imageio_ffmpeg/binaries/*ffprobe*
+ffmpeg-downloads/
 
 # C extensions
 *.so
