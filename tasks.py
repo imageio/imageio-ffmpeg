@@ -2,10 +2,10 @@
 
 import importlib
 import os
+import re
 import shutil
 import subprocess
 import sys
-from urllib.request import urlopen
 
 from invoke import task
 
@@ -13,13 +13,16 @@ from invoke import task
 
 NAME = "imageio-ffmpeg"
 LIBNAME = NAME.replace("-", "_")
-PY_PATHS = [LIBNAME, "tests", "tasks.py", "setup.py"]  # for linting/formatting
+PY_PATHS = [LIBNAME, "tests", "tools", "tasks.py", "setup.py"]  # for linting/formatting
 
 # ----------------------------------------
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 if not os.path.isdir(os.path.join(ROOT_DIR, LIBNAME)):
     sys.exit("package NAME seems to be incorrect.")
+
+# Downloaded ffmpeg binaries are kept here (see tools/download_ffmpeg.py)
+DOWNLOAD_DIR = os.path.join(ROOT_DIR, "ffmpeg-downloads")
 
 
 @task
@@ -98,36 +101,45 @@ def clean(ctx):
 
 @task
 def get_ffmpeg_binary(ctx):
-    """Download/copy ffmpeg binary for local development."""
-    # Get ffmpeg fname
-    sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
-    try:
-        from _definitions import FNAME_PER_PLATFORM, get_platform
-    finally:
-        sys.path.pop(0)
-    fname = FNAME_PER_PLATFORM[get_platform()]
+    """Download the ffmpeg binary for this platform for local development."""
+    platform = _get_definitions().get_platform()
+    path = _downloader().fetch("current", DOWNLOAD_DIR)[platform]
+    copy_binaries(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"), path)
 
-    # Clear
-    clear_binaries_dir(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"))
 
-    # Use local if we can (faster)
-    source_dir = os.path.abspath(
-        os.path.join(ROOT_DIR, "..", "imageio-binaries", "ffmpeg")
-    )
-    if os.path.isdir(source_dir):
-        copy_binaries(os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries"), fname)
-        return
+@task
+def check_binaries(ctx):
+    """Check that the binaries for all wheels match their wheel tags.
 
-    # Download from Github
-    base_url = "https://github.com/imageio/imageio-binaries/raw/master/ffmpeg/"
-    filename = os.path.join(ROOT_DIR, "imageio_ffmpeg", "binaries", fname)
-    print("Downloading", fname, "...", end="")
-    with urlopen(base_url + fname, timeout=5) as f1:
-        with open(filename, "wb") as f2:
-            shutil.copyfileobj(f1, f2)
-    # Mark executable
-    os.chmod(filename, os.stat(filename).st_mode | 64)
-    print("done")
+    Needs bash, file and llvm-readobj (e.g. on Ubuntu: apt install file llvm).
+    """
+    defs = _get_definitions()
+    paths = _downloader().fetch("all", DOWNLOAD_DIR)
+    failed = []
+    for wheeltag, platform in defs.WHEEL_BUILDS.items():
+        args = []
+        if m := re.search(r"manylinux_(\d+)_(\d+)_", wheeltag):
+            args += ["--max-glibc", "{}.{}".format(*m.groups())]
+        elif m := re.search(r"macosx_(\d+)_(\d+)_", wheeltag):
+            args += ["--max-macos", "{}.{}".format(*m.groups())]
+        script = os.path.join(ROOT_DIR, "tools", "check-binary.sh")
+        print(f"Checking {platform} binary for {wheeltag}", flush=True)
+        if subprocess.call(["bash", script, *args, str(paths[platform])]):
+            failed.append(wheeltag)
+    if failed:
+        sys.exit("Binary checks failed for: " + ", ".join(failed))
+
+
+@task
+def check_ffmpeg_updates(ctx):
+    """Compare the pinned ffmpeg binaries with the newest upstream releases."""
+    _downloader().check()
+
+
+@task(help={"platforms": '"outdated" (default), "all" or comma-separated platforms'})
+def update_ffmpeg(ctx, platforms="outdated"):
+    """Pin the newest upstream ffmpeg binaries (see tools/download_ffmpeg.py)."""
+    _downloader().update(platforms, DOWNLOAD_DIR)
 
 
 @task
@@ -135,11 +147,11 @@ def build(ctx):
     """Build packages for different platforms. Dont release yet."""
 
     # Get version and more
-    sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
-    try:
-        from _definitions import FNAME_PER_PLATFORM, WHEEL_BUILDS, __version__
-    finally:
-        sys.path.pop(0)
+    defs = _get_definitions()
+    __version__, WHEEL_BUILDS = defs.__version__, defs.WHEEL_BUILDS
+
+    # Download (or reuse previously downloaded) binaries, verifying them
+    binaries = _downloader().fetch(",".join(set(WHEEL_BUILDS.values())), DOWNLOAD_DIR)
 
     # Clear up any build artifacts
     clean(ctx)
@@ -174,12 +186,11 @@ def build(ctx):
 
     # Build for different platforms
     for wheeltag, platform in WHEEL_BUILDS.items():
-        ffmpeg_fname = FNAME_PER_PLATFORM[platform]
-
         # Edit
         print("Edit for {} ({})".format(platform, wheeltag))
         copy_binaries(
-            os.path.join(dist_dir, packdir, "imageio_ffmpeg", "binaries"), ffmpeg_fname
+            os.path.join(dist_dir, packdir, "imageio_ffmpeg", "binaries"),
+            binaries[platform],
         )
         make_platform_specific(wheelfile, wheeltag)
 
@@ -269,29 +280,40 @@ def black_wrapper(writeback):
     black.main()
 
 
+def _get_definitions():
+    sys.path.insert(0, os.path.join(ROOT_DIR, "imageio_ffmpeg"))
+    try:
+        return importlib.import_module("_definitions")
+    finally:
+        sys.path.pop(0)
+
+
+def _downloader():
+    sys.path.insert(0, os.path.join(ROOT_DIR, "tools"))
+    try:
+        return importlib.import_module("download_ffmpeg")
+    finally:
+        sys.path.pop(0)
+
+
 def clear_binaries_dir(target_dir):
     assert os.path.isdir(target_dir)
     for fname in os.listdir(target_dir):
-        if fname not in ["README.md", "__init__.py"]:
+        filename = os.path.join(target_dir, fname)
+        if fname not in ["README.md", "__init__.py"] and os.path.isfile(filename):
             print("Removing", fname, "...", end="")
-            os.remove(os.path.join(target_dir, fname))
+            os.remove(filename)
             print("done")
 
 
-def copy_binaries(target_dir, fname):
-    # Get source dir - the imageio-binaries repo must be present
-    source_dir = os.path.abspath(
-        os.path.join(ROOT_DIR, "..", "imageio-binaries", "ffmpeg")
-    )
-    if not os.path.isdir(source_dir):
-        sys.exit("Need to clone imageio-binaries next to this repo to do a release!")
-
+def copy_binaries(target_dir, source_path):
     clear_binaries_dir(target_dir)
+    fname = os.path.basename(source_path)
     print("Copying", fname, "...", end="")
     filename = os.path.join(target_dir, fname)
-    shutil.copy2(os.path.join(source_dir, fname), filename)
+    shutil.copy2(source_path, filename)
     # Mark as exe. This does not actually do anything on Windows.
-    os.chmod(filename, os.stat(filename).st_mode | 64)
+    os.chmod(filename, os.stat(filename).st_mode | 0o755)
     print("done")
 
 

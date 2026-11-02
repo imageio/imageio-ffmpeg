@@ -1,0 +1,25 @@
+name: Check ffmpeg updates
+
+# Compares the ffmpeg binaries pinned in tools/ffmpeg-sources.json with the
+# newest upstream releases; the result is shown in the run summary. To update,
+# run `invoke update-ffmpeg` locally and open a pull request.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Check upstream versions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/download_ffmpeg.py check
