@@ -1,5 +1,6 @@
 import sys
 import platform
+import sysconfig
 
 __version__ = "0.8.0"
 
@@ -21,6 +22,18 @@ def _get_os_string():
 
 
 def _get_arch():
+    if sys.platform.startswith("win"):
+        # platform.machine() reports the host CPU, which differs from the
+        # interpreter (and thus the installed wheel) under emulation, e.g.
+        # x64 Python on Windows ARM64. Use the interpreter's platform instead.
+        win_arch = {
+            "win32": "i686",
+            "win-amd64": "x86_64",
+            "win-arm64": "aarch64",
+        }.get(sysconfig.get_platform())
+        if win_arch:
+            return win_arch
+
     # See e.g.: https://stackoverflow.com/questions/45124888
     is_64_bit = sys.maxsize > 2**32
     machine = platform.machine().lower()  # e.g. "ARM64" on Windows
