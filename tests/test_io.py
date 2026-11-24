@@ -527,3 +527,16 @@ if __name__ == "__main__":
     test_write_macro_block_size()
     test_write_big_frames()
     test_write_audio_path()
+
+
+def test_read_interrupted_recording():
+    # A recording cut off before its moov atom was written (e.g. the camera lost power)
+    with open(test_file1, "rb") as f:
+        data = f.read()
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+        f.write(data[: len(data) // 2])
+    fname = f.name
+
+    with raises(IOError) as info:
+        next(imageio_ffmpeg.read_frames(fname))
+    assert "no moov atom" in str(info.value)

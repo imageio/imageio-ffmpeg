@@ -295,6 +295,13 @@ def read_frames(
         if not log_catcher.header:
             err2 = log_catcher.get_text(0.2)
             fmt = "Could not load meta information\n=== stderr ===\n{}"
+            if "moov atom not found" in err2:
+                fmt = (
+                    "Could not load meta information: {} has no moov atom (its index). "
+                    "The recording was probably interrupted before it was written, "
+                    "for example because the camera lost power or the card was removed. "
+                    "The video data may still be in the file.\n=== stderr ===\n{{}}"
+                ).format(path)
             raise IOError(fmt.format(err2))
         elif "No such file or directory" in log_catcher.header:
             raise IOError("{} not found! Wrong path?".format(path))
