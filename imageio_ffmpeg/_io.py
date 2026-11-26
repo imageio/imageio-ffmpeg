@@ -593,12 +593,24 @@ def write_frames(
     ):
         logger.info("RUNNING FFMPEG COMMAND: " + cmd_str)
 
+    # On Windows without an attached console (e.g. pythonw.exe or PyInstaller
+    # --windowed), inheriting stderr=None alongside redirected stdin/stdout fails
+    # with OSError: [WinError 6] The handle is invalid. Fall back to DEVNULL only
+    # when sys.stderr has no valid OS file descriptor.
+    stderr_target = None
+    if ISWIN:
+        try:
+            if sys.stderr is None or sys.stderr.fileno() < 0:
+                stderr_target = subprocess.DEVNULL
+        except (AttributeError, OSError, ValueError):
+            stderr_target = subprocess.DEVNULL
+
     # Launch process
     p = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        stderr=None,
+        stderr=stderr_target,
         **_popen_kwargs(prevent_sigint=True)
     )
 
